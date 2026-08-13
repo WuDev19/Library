@@ -1,0 +1,25 @@
+package com.example.library.service.base;
+
+import com.example.library.entity.RefreshToken;
+import com.example.library.entity.Role;
+import com.example.library.entity.User;
+import io.jsonwebtoken.Claims;
+
+import java.time.OffsetDateTime;
+import java.util.Set;
+
+public interface IJwtService {
+    String generateToken(String username, Long userId, Set<Role> roles);
+
+    RefreshToken generateRefreshToken(User user);
+
+    RefreshToken verifyToken(RefreshToken refreshToken);
+
+    RefreshToken rotateRefreshToken(RefreshToken refreshToken);
+
+    Claims extractJwtClaims(String token);
+
+    String extractJwtId(String token);
+
+    OffsetDateTime extractJwtExpire(String token);
+}
