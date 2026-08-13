@@ -51,10 +51,11 @@ CREATE TABLE refresh_token
 
 CREATE INDEX idx_refresh_token_user_id ON refresh_token (user_id);
 CREATE INDEX idx_refresh_token_expire_date ON refresh_token (expire_date);
+
 CREATE TABLE black_list_access_token
 (
     blacklist_token_id BIGSERIAL PRIMARY KEY,
-    token_id           VARCHAR(36) NOT NULL UNIQUE, -- JWT jti (UUID)
+    token_id           VARCHAR(36) NOT NULL UNIQUE,
     expire_date        TIMESTAMPTZ NOT NULL,
     created_at         TIMESTAMPTZ NOT NULL
 );

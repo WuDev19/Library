@@ -40,8 +40,11 @@ public enum ErrorResponse {
     START_END_DATE_BEFORE_NOW_ERROR("Bạn không được dặt lịch trong quá khứ", 1033),
     LOCK_ACQUISITION_TIMEOUT("Hệ thống đang bận xử lý, vui lòng thử lại sau", 1034),
     OVERNIGHT_BOOKING_ERROR("Thời gian họp không được kéo dài xuyên đêm (phải kết thúc trong cùng ngày bắt đầu)", 1035),
-    OFFICE_HOURS_ERROR("Thời gian họp phải nằm trong giờ hành chính (từ 08:00 đến 17:30)", 1036),
-    SYSTEM_ERROR("Lỗi hệ thống", 1037);
+    SYSTEM_ERROR("Lỗi hệ thống", 1037),
+    BOOK_OUT_OF_STOCK("Sách hiện tại đã hết bản sao sẵn có", 2001),
+    COPY_NOT_AVAILABLE("Bản sao sách không có sẵn để mượn", 2002),
+    BORROW_RECORD_NOT_ACTIVE("Bản ghi mượn sách không ở trạng thái đang mượn", 2003),
+    DUE_DATE_INVALID("Ngày hạn trả phải lớn hơn hoặc bằng ngày mượn", 2004);
 
     private final String message;
     private final int code;

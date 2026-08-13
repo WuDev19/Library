@@ -32,10 +32,12 @@ public class IJwtServiceImpl implements IJwtService {
     @Override
     public String generateToken(String username, Long userId, Set<Role> roles) {
         var expiration = 3 * 24 * 60 * 60 * 1000;
-        List<String> rolesUser = new ArrayList<>();
+        String roleName = (roles != null && !roles.isEmpty()) 
+                ? roles.iterator().next().getRoleName() 
+                : "BORROWER";
         return Jwts.builder()
                 .subject(username)
-                .claim(StringCommon.ROLES, rolesUser)
+                .claim(StringCommon.ROLES, roleName)
                 .claim(StringCommon.USER_ID, userId)
                 .id(UUID.randomUUID().toString())
                 .issuedAt(new Date())
