@@ -33,3 +33,4 @@ build/
 .vscode/
 .env
 *.jks
+./postgres/init.sql

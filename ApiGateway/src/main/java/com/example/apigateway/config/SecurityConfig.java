@@ -23,7 +23,8 @@ public class SecurityConfig {
     private final MyJwtDecoder myJwtDecoder;
     private final String END_POINT = "/api/v1/";
     private final String[] publicEndpoints = {
-            END_POINT + "auth/**"
+            END_POINT + "auth/**",
+            "/fallback"
     };
 
     @Bean

@@ -7,15 +7,11 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
     environment:
-      - POSTGRES_DB=tmp
+      - POSTGRES_DB=postgres
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=${DB_PASSWORD}
-      - AUTH_DB_PASSWORD=${AUTH_DB_PASSWORD}
-      - USER_DB_PASSWORD=${USER_DB_PASSWORD}
-      - BOOK_DB_PASSWORD=${BOOK_DB_PASSWORD}
-      - NOTIFICATION_PASSWORD=${NOTIFICATION_PASSWORD}
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U postgres" ]
       interval: 10s
@@ -51,26 +47,26 @@ services:
       retries: 12
       start_period: 20s
 
-  config-server:
-    build:
-      context: ./ConfigServer
-      dockerfile: Dockerfile
-    container_name: config-server
-    ports:
-      - "8888:8888"
-    environment:
-      PAT_GIT: ${PAT_GIT}
-      DISCOVERY_SERVER: discovery-server
-      RSA_PASS: ${RSA_PASS}
-    depends_on:
-      discovery-server:
-        condition: service_healthy
-    healthcheck:
-      test: [ "CMD-SHELL", "curl -f http://localhost:8888/actuator/health || exit 1" ]
-      interval: 10s
-      timeout: 5s
-      retries: 12
-      start_period: 25s
+#  config-server:
+#    build:
+#      context: ./ConfigServer
+#      dockerfile: Dockerfile
+#    container_name: config-server
+#    ports:
+#      - "8888:8888"
+#    environment:
+#      PAT_GIT: ${PAT_GIT}
+#      DISCOVERY_SERVER: discovery-server
+#      RSA_PASS: ${RSA_PASS}
+#    depends_on:
+#      discovery-server:
+#        condition: service_healthy
+#    healthcheck:
+#      test: [ "CMD-SHELL", "curl -f http://localhost:8888/actuator/health || exit 1" ]
+#      interval: 10s
+#      timeout: 5s
+#      retries: 12
+#      start_period: 25s
 
   api-gateway-service:
     build:
@@ -85,12 +81,11 @@ services:
       REDIS_HOST: redis
       REDIS_PASS: ${REDIS_PASS}
       JWT_SECRET_KEY: ${JWT_SECRET_KEY}
-
     depends_on:
       discovery-server:
         condition: service_healthy
-      config-server:
-        condition: service_healthy
+#      config-server:
+#        condition: service_healthy
       redis:
         condition: service_healthy
 
@@ -109,12 +104,15 @@ services:
       DB_USERNAME: auth_user
       DB_PASSWORD: ${AUTH_DB_PASSWORD}
       REDIS_PASS: ${REDIS_PASS}
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY}
     depends_on:
       discovery-server:
         condition: service_healthy
-      config-server:
-        condition: service_healthy
+#      config-server:
+#        condition: service_healthy
       redis:
+        condition: service_healthy
+      postgres-db:
         condition: service_healthy
 
   user-service:
@@ -133,9 +131,11 @@ services:
     depends_on:
       discovery-server:
         condition: service_healthy
-      config-server:
-        condition: service_healthy
+#      config-server:
+#        condition: service_healthy
       redis:
+        condition: service_healthy
+      postgres-db:
         condition: service_healthy
 
 volumes:

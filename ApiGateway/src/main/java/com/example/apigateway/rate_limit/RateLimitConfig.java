@@ -11,7 +11,7 @@ import java.net.InetSocketAddress;
 public class RateLimitConfig {
 
     @Bean
-    public KeyResolver keyResolver() {
+    public KeyResolver ipResolver() {
         return exchange -> {
             InetSocketAddress remoteAddress = exchange.getRequest().getRemoteAddress();
             String ip = remoteAddress != null
