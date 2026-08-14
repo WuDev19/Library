@@ -1,10 +1,13 @@
 package com.example.authservice.service.impl;
 
+import com.example.authservice.client.UserService;
 import com.example.authservice.dto.common.CRUDResponseHelper;
 import com.example.authservice.dto.request.auth.LoginByUsernameRequest;
 import com.example.authservice.dto.request.auth.LogoutRequest;
 import com.example.authservice.dto.request.auth.SignUpWithUsernameRequest;
+import com.example.authservice.dto.request.auth.UserCreateRequest;
 import com.example.authservice.dto.response.LoginResponse;
+import com.example.authservice.dto.response.UserCreateResponse;
 import com.example.authservice.entity.Account;
 import com.example.authservice.entity.RefreshToken;
 import com.example.authservice.entity.Role;
@@ -38,6 +41,7 @@ public class AuthenticationServiceImpl implements IAuthenticationService {
     private final RoleRepository roleRepository;
     private final IJwtService jwtService;
     private final IRedisService redisService;
+    private final UserService userService;
     private static final String BLACK_KEY = "blacklist_token:jwt_id:";
 
     @Transactional
@@ -76,6 +80,16 @@ public class AuthenticationServiceImpl implements IAuthenticationService {
                 .roles(Set.of(role))
                 .build();
         accountRepository.save(account);
+        UserCreateResponse response = userService.createUser(new UserCreateRequest(
+                account.getUserId(),
+                request.email(),
+                request.fullName(),
+                request.phone()
+        ));
+        //nếu bị nhảy vào fallback thì xóa account đi để consistency
+        if (response == null) {
+            throw new BusinessException(ErrorResponse.USER_CREATE_ERROR);
+        }
         return CRUDResponseHelper.createSuccess();
     }
 

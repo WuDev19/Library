@@ -1,6 +1,10 @@
 package com.example.authservice.dto.request.auth;
 
-import com.example.library.utils.StringCommon;
+import com.example.authservice.constants.StringCommon;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 
 public record LoginByUsernameRequest(
         @Size(min = 1, message = "Vui lòng nhập username")

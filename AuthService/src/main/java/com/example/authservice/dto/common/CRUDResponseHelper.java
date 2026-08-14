@@ -1,7 +1,7 @@
 package com.example.authservice.dto.common;
 
-import com.example.library.utils.StringCommon;
-import com.example.library.utils.TimeUtils;
+import com.example.authservice.constants.StringCommon;
+import com.example.authservice.utils.TimeUtils;
 
 import java.util.Map;
 

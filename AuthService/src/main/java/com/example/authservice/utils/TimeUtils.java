@@ -1,6 +1,6 @@
 package com.example.authservice.utils;
 
-import com.example.library.utils.StringCommon;
+import com.example.authservice.constants.StringCommon;
 
 import java.time.*;
 import java.time.format.DateTimeFormatter;

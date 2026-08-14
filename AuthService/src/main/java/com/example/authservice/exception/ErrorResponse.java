@@ -23,7 +23,8 @@ public enum ErrorResponse {
     INVALID_RECIPIENT("Địa chỉ email người nhận không hợp lệ hoặc không tồn tại", 1016),
     SYSTEM_UNKNOWN_ERROR("Gửi email thất bại do lỗi hệ thống chưa xác định", 1018),
     FAKE_AUTH_ERROR("Bạn đang mạo danh người khác, nghiêm cấm hành vi này", 1021),
-    EMAIL_LINK_UNAVAILABILITY("Link xác nhận không còn khả dụng, vui lòng đợi hệ thống gửi lại", 1026);
+    EMAIL_LINK_UNAVAILABILITY("Link xác nhận không còn khả dụng, vui lòng đợi hệ thống gửi lại", 1022),
+    USER_CREATE_ERROR("Tạo tài khoản không thành công", 1023);
 
     private final String message;
     private final int code;
