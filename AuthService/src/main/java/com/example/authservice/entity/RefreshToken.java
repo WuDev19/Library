@@ -1,0 +1,45 @@
+package com.example.authservice.entity;
+
+import com.example.authservice.utils.TimeUtils;
+import jakarta.persistence.*;
+import lombok.*;
+
+import java.time.OffsetDateTime;
+
+@Entity
+@Table(name = "refresh_token")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder(access = AccessLevel.PUBLIC)
+public class RefreshToken {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "refresh_token_id")
+    private Long refreshId;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    private Account account;
+
+    @Column(name = "refresh_token", unique = true, nullable = false, length = 500)
+    private String refreshToken;
+
+    @Column(name = "expire_date", nullable = false)
+    private OffsetDateTime expireDate;
+
+    @Builder.Default
+    @Column(name = "is_revoked", nullable = false)
+    private Boolean isRevoked = false;
+
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private OffsetDateTime createdAt;
+
+    @PrePersist
+    public void onCreate() {
+        this.createdAt = TimeUtils.now();
+    }
+}
+
