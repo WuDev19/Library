@@ -4,6 +4,7 @@ import com.example.bookborrowservice.entity.OutboxEvent;
 import com.example.bookborrowservice.entity.enums.OutboxStatus;
 import com.example.bookborrowservice.repository.OutboxEventRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -12,6 +13,7 @@ import org.springframework.stereotype.Component;
 import java.time.OffsetDateTime;
 import java.util.List;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class OutboxPublisherScheduler {
@@ -37,6 +39,7 @@ public class OutboxPublisherScheduler {
                 kafkaTemplate.send(KAFKA_TOPIC, event.getAggregateId(), event.getPayload())
                         .whenComplete((result, ex) -> {
                             if (ex == null) {
+                                log.debug("gửi thành công");
                                 event.setStatus(OutboxStatus.PROCESSED);
                                 event.setProcessedAt(OffsetDateTime.now());
                                 outboxEventRepository.save(event);

@@ -35,9 +35,9 @@ public class LibraryNotificationJob {
 
     public void runScan() {
         LocalDate today = LocalDate.now();
-        List<BorrowRecord> activeRecords = borrowRecordRepository.findAllWithDetails().stream()
-                .filter(record -> record.getStatus() == BorrowStatus.BORROWING || record.getStatus() == BorrowStatus.OVERDUE)
-                .toList();
+        List<BorrowRecord> activeRecords = borrowRecordRepository.findActiveBorrowsByStatusesWithDetails(
+                List.of(BorrowStatus.BORROWING, BorrowStatus.OVERDUE)
+        );
 
         for (BorrowRecord record : activeRecords) {
             String bookTitle = (record.getBookCopy() != null && record.getBookCopy().getBook() != null)

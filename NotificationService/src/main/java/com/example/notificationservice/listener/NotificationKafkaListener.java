@@ -11,6 +11,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.kafka.support.Acknowledgment;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,16 +29,17 @@ public class NotificationKafkaListener {
 
     @KafkaListener(topics = "notification-events", groupId = "notification-group")
     @Transactional
-    public void handleNotificationEvent(String messagePayload) {
-
+    public void handleNotificationEvent(String messagePayload, Acknowledgment ack) {
         NotificationEventPayload payload;
         try {
             payload = objectMapper.readValue(messagePayload, NotificationEventPayload.class);
         } catch (Exception e) {
+            log.error("lỗi " + e.getMessage());
             return;
         }
         boolean exists = notificationRepository.existsByBorrowRecordIdAndType(payload.borrowRecordId(), payload.type());
         if (exists) {
+            log.error("lỗi ko tồn tại");
             return;
         }
         Notification notification = Notification.builder()
@@ -62,6 +64,7 @@ public class NotificationKafkaListener {
         }
         if (userEmail != null && !userEmail.isBlank()) {
             emailServiceImpl.sendNotificationEmail(userEmail, fullName, payload);
+            ack.acknowledge();
         }
     }
 }

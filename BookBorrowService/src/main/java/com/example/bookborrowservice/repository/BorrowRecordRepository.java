@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -25,4 +26,10 @@ public interface BorrowRecordRepository extends JpaRepository<BorrowRecord, Long
 
     @Query("SELECT r FROM BorrowRecord r JOIN FETCH r.bookCopy bc JOIN FETCH bc.book b WHERE r.borrowerId IN :userIds AND r.status IN (:statuses)")
     List<BorrowRecord> findActiveBorrowsByUserIdsWithDetails(@Param("userIds") List<Long> userIds, @Param("statuses") List<BorrowStatus> statuses);
+
+    @Query("SELECT r FROM BorrowRecord r JOIN FETCH r.bookCopy bc JOIN FETCH bc.book b WHERE r.status IN :statuses")
+    List<BorrowRecord> findActiveBorrowsByStatusesWithDetails(@Param("statuses") List<BorrowStatus> statuses);
+
+    @Query("SELECT r FROM BorrowRecord r JOIN FETCH r.bookCopy bc JOIN FETCH bc.book b WHERE r.status = :status AND r.dueDate > :today")
+    List<BorrowRecord> findOverdueCandidateRecordsWithDetails(@Param("status") BorrowStatus status, @Param("today") LocalDate today);
 }

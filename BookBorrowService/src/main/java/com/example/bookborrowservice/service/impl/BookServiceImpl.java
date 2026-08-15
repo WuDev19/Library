@@ -39,7 +39,25 @@ public class BookServiceImpl implements IBookService {
                 .orElseThrow(() -> new BusinessException(ErrorResponse.RESOURCE_NOT_FOUND));
 
         Book book = bookMapper.mapToEntity(request, category);
-        bookRepository.save(book);
+
+        int quantity = (request.initialQuantity() != null && request.initialQuantity() > 0)
+                ? request.initialQuantity()
+                : 1;
+
+        book.setTotalQuantity(quantity);
+        book.setAvailableQuantity(quantity);
+        book = bookRepository.save(book);
+
+        for (int i = 1; i <= quantity; i++) {
+            String assetCode = book.getCode() + "-" + String.format("%03d", i);
+            BookCopy bookCopy = BookCopy.builder()
+                    .book(book)
+                    .assetCode(assetCode)
+                    .status(CopyStatus.AVAILABLE)
+                    .note("Bản sao khởi tạo ban đầu khi tạo sách mới")
+                    .build();
+            bookCopyRepository.save(bookCopy);
+        }
     }
 
     @Override
@@ -144,7 +162,6 @@ public class BookServiceImpl implements IBookService {
             bookImportItemRepository.save(item);
         }
 
-        // Cập nhật lại số lượng sách
         book.setTotalQuantity(book.getTotalQuantity() + request.quantity());
         book.setAvailableQuantity(book.getAvailableQuantity() + request.quantity());
         bookRepository.save(book);

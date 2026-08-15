@@ -109,4 +109,15 @@ public class BorrowController {
     public Map<Long, List<BorrowedBookResponse>> getActiveBorrowsByUserIds(@RequestBody List<Long> userIds) {
         return borrowService.getActiveBorrowsByUserIds(userIds);
     }
+
+    @PostMapping("/scan-overdue")
+    @PreAuthorize("hasRole('LIBRARIAN')")
+    public ResponseEntity<ApiResult<Map<String, Object>>> scanOverdueBorrows() {
+        Map<String, Object> result = borrowService.scanOverdueBorrows();
+        return ApiResponse.success(
+                result,
+                "Quét danh sách phiếu mượn quá hạn thành công",
+                Constants.SUCCESS_CODE
+        );
+    }
 }

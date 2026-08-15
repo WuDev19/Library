@@ -20,4 +20,6 @@ public interface IBorrowService {
     BorrowRecordResponse getBorrowRecordById(Long id);
 
     Map<Long, List<BorrowedBookResponse>> getActiveBorrowsByUserIds(List<Long> userIds);
+
+    Map<String, Object> scanOverdueBorrows();
 }

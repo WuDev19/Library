@@ -1,7 +1,9 @@
 package com.example.bookborrowservice.repository;
 
 import com.example.bookborrowservice.entity.Book;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -14,6 +16,10 @@ public interface BookRepository extends JpaRepository<Book, Long> {
 
     @Query("SELECT b FROM Book b LEFT JOIN FETCH b.category WHERE b.bookId = :id")
     Optional<Book> findByIdWithCategory(@Param("id") Long id);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT b FROM Book b LEFT JOIN FETCH b.category WHERE b.bookId = :id")
+    Optional<Book> findByIdWithCategoryForUpdate(@Param("id") Long id);
 
     @Query("SELECT b FROM Book b LEFT JOIN FETCH b.category ORDER BY b.createdAt DESC")
     List<Book> findAllWithCategory();

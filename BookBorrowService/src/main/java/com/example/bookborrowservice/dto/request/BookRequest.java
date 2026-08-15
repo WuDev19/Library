@@ -20,6 +20,7 @@ public record BookRequest(
         String publisher,
         Short publishedYear,
         String isbn,
-        String description
+        String description,
+        Integer initialQuantity
 ) {
 }
