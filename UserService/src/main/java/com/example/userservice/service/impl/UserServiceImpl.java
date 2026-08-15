@@ -33,9 +33,6 @@ public class UserServiceImpl implements IUserService {
     @Transactional
     @Override
     public UserCreateResponse createUser(UserCreateRequest request) {
-        if(request != null){
-            throw new BusinessException(ErrorResponse.RESOURCE_NOT_FOUND);
-        }
         User user = User.builder()
                 .userId(request.userId())
                 .email(request.email())

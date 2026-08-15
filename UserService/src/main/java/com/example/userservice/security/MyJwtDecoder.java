@@ -2,7 +2,7 @@ package com.example.userservice.security;
 
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
@@ -17,11 +17,11 @@ import java.nio.charset.StandardCharsets;
 public class MyJwtDecoder implements JwtDecoder {
 
     private final NimbusJwtDecoder jwtDecoder;
-    private final StringRedisTemplate redisTemplate;
+    private final RedisTemplate<String, Object> redisTemplate;
 
     public MyJwtDecoder(
             @Value("${jwt.secret-key}") String JWT_SECRET_KEY,
-            StringRedisTemplate redisTemplate
+            RedisTemplate<String, Object> redisTemplate
     ) {
         this.jwtDecoder = NimbusJwtDecoder
                 .withSecretKey(Keys.hmacShaKeyFor(JWT_SECRET_KEY.getBytes(StandardCharsets.UTF_8)))

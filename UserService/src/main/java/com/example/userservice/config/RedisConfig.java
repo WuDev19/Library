@@ -1,4 +1,4 @@
-package com.example.authservice.config;
+package com.example.userservice.config;
 
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Bean;

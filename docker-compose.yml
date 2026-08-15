@@ -175,6 +175,34 @@ services:
       postgres-db:
         condition: service_healthy
 
+  notification-service:
+    build:
+      context: ./NotificationService
+      dockerfile: Dockerfile
+    ports:
+      - "8084:8084"
+    container_name: notification-service
+    environment:
+      CONFIG_SERVER: config-server
+      DISCOVERY_SERVER: discovery-server
+      DB_HOST_POSTGRES: postgres-db
+      DB_PASSWORD: ${NOTIFICATION_PASSWORD}
+      DB_USERNAME: notification_user
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY}
+      REDIS_HOST: redis
+      REDIS_PASS: ${REDIS_PASS}
+      APP_EMAIL: ${APP_EMAIL}
+      APP_EMAIL_PASSWORD: ${APP_EMAIL_PASSWORD}
+    depends_on:
+      discovery-server:
+        condition: service_healthy
+      #      config-server:
+      #        condition: service_healthy
+      redis:
+        condition: service_healthy
+      postgres-db:
+        condition: service_healthy
+
 volumes:
   postgres_data:
   redis-data:

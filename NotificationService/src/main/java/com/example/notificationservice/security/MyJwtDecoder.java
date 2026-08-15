@@ -1,6 +1,7 @@
-package com.example.bookborrowservice.security;
+package com.example.notificationservice.security;
 
 import io.jsonwebtoken.security.Keys;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
@@ -14,16 +15,17 @@ import java.nio.charset.StandardCharsets;
 
 @SuppressWarnings("NullableProblems")
 @Component
+@Slf4j
 public class MyJwtDecoder implements JwtDecoder {
 
-    private final NimbusJwtDecoder jwtDecoder;
     private final RedisTemplate<String, Object> redisTemplate;
+    private final NimbusJwtDecoder nimbusJwtDecoder;
 
     public MyJwtDecoder(
             @Value("${JWT_SECRET_KEY}") String JWT_SECRET_KEY,
             RedisTemplate<String, Object> redisTemplate
     ) {
-        this.jwtDecoder = NimbusJwtDecoder
+        this.nimbusJwtDecoder = NimbusJwtDecoder
                 .withSecretKey(Keys.hmacShaKeyFor(JWT_SECRET_KEY.getBytes(StandardCharsets.UTF_8)))
                 .macAlgorithm(MacAlgorithm.HS256)
                 .build();
@@ -32,7 +34,7 @@ public class MyJwtDecoder implements JwtDecoder {
 
     @Override
     public Jwt decode(String token) throws JwtException {
-        Jwt jwt = jwtDecoder.decode(token);
+        Jwt jwt = nimbusJwtDecoder.decode(token);
         String jti = jwt.getId();
         if (jti == null || jti.isBlank()) {
             throw new JwtException("JWT thiếu jti");
