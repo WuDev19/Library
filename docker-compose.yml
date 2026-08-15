@@ -103,10 +103,10 @@ services:
       notification-service:
         condition: service_healthy
     healthcheck:
-      test: [ "CMD-SHELL", "curl -s http://localhost:8080/ || exit 0" ]
-      interval: 10s
+      test: [ "CMD-SHELL", "curl -s http://localhost:8080/ || exit 1" ]
+      interval: 5s
       timeout: 5s
-      retries: 12
+      retries: 20
       start_period: 20s
 
   auth-service:
@@ -133,10 +133,10 @@ services:
       postgres-db:
         condition: service_healthy
     healthcheck:
-      test: [ "CMD-SHELL", "curl -s http://localhost:8081/ || exit 0" ]
-      interval: 10s
+      test: [ "CMD-SHELL", "curl -s http://localhost:8081/ || exit 1" ]
+      interval: 5s
       timeout: 5s
-      retries: 12
+      retries: 20
       start_period: 25s
 
   user-service:
@@ -163,10 +163,10 @@ services:
       postgres-db:
         condition: service_healthy
     healthcheck:
-      test: [ "CMD-SHELL", "curl -s http://localhost:8082/ || exit 0" ]
-      interval: 10s
+      test: [ "CMD-SHELL", "curl -s http://localhost:8082/ || exit 1" ]
+      interval: 5s
       timeout: 5s
-      retries: 12
+      retries: 20
       start_period: 25s
 
   book-borrow-service:
@@ -199,10 +199,10 @@ services:
       broker-3:
         condition: service_healthy
     healthcheck:
-      test: [ "CMD-SHELL", "curl -s http://localhost:8083/ || exit 0" ]
-      interval: 10s
+      test: [ "CMD-SHELL", "curl -s http://localhost:8083/ || exit 1" ]
+      interval: 5s
       timeout: 5s
-      retries: 12
+      retries: 20
       start_period: 25s
 
   notification-service:
@@ -237,10 +237,10 @@ services:
       broker-3:
         condition: service_healthy
     healthcheck:
-      test: [ "CMD-SHELL", "curl -s http://localhost:8084/ || exit 0" ]
-      interval: 10s
+      test: [ "CMD-SHELL", "curl -s http://localhost:8084/ || exit 1" ]
+      interval: 5s
       timeout: 5s
-      retries: 12
+      retries: 20
       start_period: 25s
 
   lib-frontend:
