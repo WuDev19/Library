@@ -30,6 +30,6 @@ public interface BorrowRecordRepository extends JpaRepository<BorrowRecord, Long
     @Query("SELECT r FROM BorrowRecord r JOIN FETCH r.bookCopy bc JOIN FETCH bc.book b WHERE r.status IN :statuses")
     List<BorrowRecord> findActiveBorrowsByStatusesWithDetails(@Param("statuses") List<BorrowStatus> statuses);
 
-    @Query("SELECT r FROM BorrowRecord r JOIN FETCH r.bookCopy bc JOIN FETCH bc.book b WHERE r.status = :status AND r.dueDate > :today")
+    @Query("SELECT r FROM BorrowRecord r JOIN FETCH r.bookCopy bc JOIN FETCH bc.book b WHERE r.status = :status AND r.dueDate < :today")
     List<BorrowRecord> findOverdueCandidateRecordsWithDetails(@Param("status") BorrowStatus status, @Param("today") LocalDate today);
 }

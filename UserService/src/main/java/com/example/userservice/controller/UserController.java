@@ -42,7 +42,7 @@ public class UserController {
     }
 
     @GetMapping("/{userId}")
-    @PreAuthorize("hasRole('LIBRARIAN') or (hasRole('BORROWER') and #userId == authentication.token.claims['userId'])")
+    @PreAuthorize("hasAnyRole('SYSTEM', 'LIBRARIAN') or (hasRole('BORROWER') and #userId == authentication.token.claims['userId'])")
     public ResponseEntity<ApiResult<UserResponse>> getUserById(@PathVariable Long userId) {
         UserResponse response = userService.getUserById(userId);
         return ApiResponse.success(response, "Lấy thông tin user thành công", Constants.SUCCESS_CODE);

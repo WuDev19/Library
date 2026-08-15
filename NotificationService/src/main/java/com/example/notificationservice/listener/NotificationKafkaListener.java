@@ -30,41 +30,54 @@ public class NotificationKafkaListener {
     @KafkaListener(topics = "notification-events", groupId = "notification-group")
     @Transactional
     public void handleNotificationEvent(String messagePayload, Acknowledgment ack) {
-        NotificationEventPayload payload;
         try {
-            payload = objectMapper.readValue(messagePayload, NotificationEventPayload.class);
-        } catch (Exception e) {
-            log.error("lỗi " + e.getMessage());
-            return;
-        }
-        boolean exists = notificationRepository.existsByBorrowRecordIdAndType(payload.borrowRecordId(), payload.type());
-        if (exists) {
-            log.error("lỗi ko tồn tại");
-            return;
-        }
-        Notification notification = Notification.builder()
-                .userId(payload.userId())
-                .borrowRecordId(payload.borrowRecordId())
-                .type(payload.type())
-                .message(payload.message())
-                .isRead(false)
-                .sentAt(OffsetDateTime.now())
-                .build();
-        notificationRepository.save(notification);
-        String userEmail = null;
-        String fullName = null;
-        try {
-            ApiResult<UserResponse> userApiResult = userServiceClient.getUserById(payload.userId());
-            if (userApiResult != null && userApiResult.getData() != null) {
-                userEmail = userApiResult.getData().email();
-                fullName = userApiResult.getData().fullName();
+            NotificationEventPayload payload;
+            try {
+                payload = objectMapper.readValue(messagePayload, NotificationEventPayload.class);
+            } catch (Exception e) {
+                log.error("[Kafka Consumer Error] Lỗi parse JSON message payload: {}", e.getMessage(), e);
+                return;
             }
-        } catch (Exception e) {
-            log.warn("[UserService Feign Error] Không thể lấy email của userId={}: {}", payload.userId(), e.getMessage());
-        }
-        if (userEmail != null && !userEmail.isBlank()) {
-            emailServiceImpl.sendNotificationEmail(userEmail, fullName, payload);
-            ack.acknowledge();
+
+            boolean exists = notificationRepository.existsByBorrowRecordIdAndType(payload.borrowRecordId(), payload.type());
+            if (exists) {
+                log.warn("[Kafka Consumer Skip] Thông báo đã tồn tại cho borrowRecordId={} và type={}", payload.borrowRecordId(), payload.type());
+                return;
+            }
+
+            Notification notification = Notification.builder()
+                    .userId(payload.userId())
+                    .borrowRecordId(payload.borrowRecordId())
+                    .type(payload.type())
+                    .message(payload.message())
+                    .isRead(false)
+                    .sentAt(OffsetDateTime.now())
+                    .build();
+            notificationRepository.save(notification);
+
+            String userEmail = null;
+            String fullName = null;
+            try {
+                ApiResult<UserResponse> userApiResult = userServiceClient.getUserById(payload.userId());
+                if (userApiResult != null && userApiResult.getData() != null) {
+                    userEmail = userApiResult.getData().email();
+                    fullName = userApiResult.getData().fullName();
+                }
+            } catch (Exception e) {
+                log.warn("[UserService Feign Error] Không thể lấy thông tin user cho userId={}: {}", payload.userId(), e.getMessage());
+            }
+
+            if (userEmail != null && !userEmail.isBlank()) {
+                try {
+                    emailServiceImpl.sendNotificationEmail(userEmail, fullName, payload);
+                } catch (Exception e) {
+                    log.error("[Email Error] Không thể gửi email cho userId={}: {}", payload.userId(), e.getMessage());
+                }
+            }
+        } finally {
+            if (ack != null) {
+                ack.acknowledge();
+            }
         }
     }
 }
