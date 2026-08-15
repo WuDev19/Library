@@ -1,6 +1,6 @@
 package com.example.userservice.service.impl;
 
-import com.example.userservice.client.BookBorrowServiceClient;
+import com.example.userservice.client.BookBorrowService;
 import com.example.userservice.dto.request.UserCreateRequest;
 import com.example.userservice.dto.request.UserUpdateRequest;
 import com.example.userservice.dto.response.BorrowedBookResponse;
@@ -28,7 +28,7 @@ public class UserServiceImpl implements IUserService {
 
     private final UserRepository userRepository;
     private final UserMapper userMapper;
-    private final BookBorrowServiceClient bookBorrowServiceClient;
+    private final BookBorrowService bookBorrowService;
 
     @Transactional
     @Override
@@ -95,7 +95,7 @@ public class UserServiceImpl implements IUserService {
             return Collections.emptyList();
         }
         List<Long> userIds = users.stream().map(User::getUserId).toList();
-        Map<Long, List<BorrowedBookResponse>> activeBorrowsMap = bookBorrowServiceClient.getActiveBorrowsByUserIds(userIds);
+        Map<Long, List<BorrowedBookResponse>> activeBorrowsMap = bookBorrowService.getActiveBorrowsByUserIds(userIds);
         return users.stream()
                 .map(user -> {
                     List<BorrowedBookResponse> books = activeBorrowsMap != null

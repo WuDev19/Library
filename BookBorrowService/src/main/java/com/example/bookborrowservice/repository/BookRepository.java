@@ -12,9 +12,6 @@ public interface BookRepository extends JpaRepository<Book, Long> {
 
     boolean existsByCode(String code);
 
-    /**
-     * Dùng JOIN FETCH category để tránh lỗi N+1 khi load Book kèm Category
-     */
     @Query("SELECT b FROM Book b LEFT JOIN FETCH b.category WHERE b.bookId = :id")
     Optional<Book> findByIdWithCategory(@Param("id") Long id);
 
@@ -27,9 +24,6 @@ public interface BookRepository extends JpaRepository<Book, Long> {
            "AND (:code IS NULL OR LOWER(b.code) LIKE LOWER(CONCAT('%', :code, '%')))")
     List<Book> searchBooks(@Param("title") String title, @Param("code") String code);
 
-    /**
-     * Lấy danh sách sách theo mã danh mục (JOIN FETCH category)
-     */
     @Query("SELECT DISTINCT b FROM Book b " +
            "LEFT JOIN FETCH b.category c " +
            "WHERE LOWER(c.code) = LOWER(:categoryCode)")

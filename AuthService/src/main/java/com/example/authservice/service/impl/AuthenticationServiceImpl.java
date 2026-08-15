@@ -117,8 +117,14 @@ public class AuthenticationServiceImpl implements IAuthenticationService {
         refreshToken.setIsRevoked(true);
         String jwtId = jwtService.extractJwtId(logoutRequest.accessToken());
         OffsetDateTime expireDate = jwtService.extractJwtExpire(logoutRequest.accessToken());
-        long expire = ChronoUnit.MINUTES.between(TimeUtils.now(), expireDate);
-        redisService.set(BLACK_KEY + jwtId, true, Duration.ofMinutes(expire));
+        Duration ttl = Duration.between(TimeUtils.now(), expireDate);
+        if (!ttl.isNegative() && !ttl.isZero()) {
+            redisService.set(
+                    BLACK_KEY + jwtId,
+                    true,
+                    ttl
+            );
+        }
         refreshTokenRepository.save(refreshToken);
         return CRUDResponseHelper.modifySuccess();
     }

@@ -1,0 +1,77 @@
+services:
+  controller-1:
+    image: apache/kafka:3.9.0
+    container_name: controller-1
+    restart: unless-stopped
+    env_file:
+      - ./controller-common.env
+      - ./controller-1.env
+    volumes:
+      - controller1-data:/var/lib/kafka/data
+
+  controller-2:
+    image: apache/kafka:3.9.0
+    container_name: controller-2
+    restart: unless-stopped
+    env_file:
+      - ./controller-common.env
+      - ./controller-2.env
+    volumes:
+      - controller2-data:/var/lib/kafka/data
+
+  controller-3:
+    image: apache/kafka:3.9.0
+    container_name: controller-3
+    restart: unless-stopped
+    env_file:
+      - ./controller-common.env
+      - ./controller-3.env
+    volumes:
+      - controller3-data:/var/lib/kafka/data
+
+  broker-1:
+    image: apache/kafka:3.9.0
+    container_name: broker-1
+    restart: unless-stopped
+    depends_on: [ controller-1, controller-2, controller-3 ]
+    ports:
+      - "9092:9092"
+    env_file:
+      - ./broker-common.env
+      - ./broker-1.env
+    volumes:
+      - broker1-data:/var/lib/kafka/data
+
+  broker-2:
+    image: apache/kafka:3.9.0
+    container_name: broker-2
+    restart: unless-stopped
+    depends_on: [ controller-1, controller-2, controller-3 ]
+    ports:
+      - "9094:9092"
+    env_file:
+      - ./broker-common.env
+      - ./broker-2.env
+    volumes:
+      - broker2-data:/var/lib/kafka/data
+
+  broker-3:
+    image: apache/kafka:3.9.0
+    container_name: broker-3
+    restart: unless-stopped
+    depends_on: [ controller-1, controller-2, controller-3 ]
+    ports:
+      - "9095:9092"
+    env_file:
+      - ./broker-common.env
+      - ./broker-3.env
+    volumes:
+      - broker3-data:/var/lib/kafka/data
+
+volumes:
+  controller1-data:
+  controller2-data:
+  controller3-data:
+  broker1-data:
+  broker2-data:
+  broker3-data:

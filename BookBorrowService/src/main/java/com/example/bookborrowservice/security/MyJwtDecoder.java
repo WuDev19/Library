@@ -12,10 +12,6 @@ import org.springframework.stereotype.Component;
 
 import java.nio.charset.StandardCharsets;
 
-/**
- * Custom JwtDecoder dùng HMAC-HS256.
- * Kiểm tra xem token (jti) có bị đưa vào danh sách đen (blacklist) trong Redis hay không.
- */
 @SuppressWarnings("NullableProblems")
 @Component
 public class MyJwtDecoder implements JwtDecoder {

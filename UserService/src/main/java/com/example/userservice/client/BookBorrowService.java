@@ -12,8 +12,8 @@ import java.util.List;
 import java.util.Map;
 
 @Service
-@FeignClient(name = "BookBorrowService", fallback = BookBorrowServiceClientFallback.class)
-public interface BookBorrowServiceClient {
+@FeignClient(name = "BookBorrowService", fallback = BookBorrowServiceImpl.class)
+public interface BookBorrowService {
 
     @PostMapping("/borrows/active-by-users")
     Map<Long, List<BorrowedBookResponse>> getActiveBorrowsByUserIds(@RequestBody List<Long> userIds);
@@ -21,7 +21,7 @@ public interface BookBorrowServiceClient {
 
 @Service
 @Slf4j
-class BookBorrowServiceClientFallback implements BookBorrowServiceClient {
+class BookBorrowServiceImpl implements BookBorrowService {
 
     @Override
     public Map<Long, List<BorrowedBookResponse>> getActiveBorrowsByUserIds(List<Long> userIds) {

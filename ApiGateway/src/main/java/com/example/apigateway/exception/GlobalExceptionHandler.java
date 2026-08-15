@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.jspecify.annotations.NonNull;
 import org.springframework.core.annotation.Order;
 import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.http.HttpStatus;
@@ -30,7 +31,7 @@ public class GlobalExceptionHandler implements WebExceptionHandler {
     private final ObjectMapper objectMapper;
 
     @Override
-    public Mono<Void> handle(ServerWebExchange exchange, Throwable ex) {
+    public @NonNull Mono<Void> handle(ServerWebExchange exchange, @NonNull Throwable ex) {
         ServerHttpResponse response = exchange.getResponse();
 
         if (response.isCommitted()) {

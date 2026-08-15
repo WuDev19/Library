@@ -23,12 +23,6 @@ public interface BorrowRecordRepository extends JpaRepository<BorrowRecord, Long
     @Query("SELECT r FROM BorrowRecord r JOIN FETCH r.bookCopy bc JOIN FETCH bc.book b ORDER BY r.createdAt DESC")
     List<BorrowRecord> findAllWithDetails();
 
-    @Query("SELECT COUNT(r) FROM BorrowRecord r WHERE r.borrowerId = :userId AND r.status IN ('BORROWING', 'OVERDUE')")
-    int countActiveBorrowsByUser(@Param("userId") Long userId);
-
-    /**
-     * Tối ưu batch call: Lấy tất cả sách đang mượn của 1 danh sách userIDs trong 1 câu SQL duy nhất
-     */
     @Query("SELECT r FROM BorrowRecord r JOIN FETCH r.bookCopy bc JOIN FETCH bc.book b WHERE r.borrowerId IN :userIds AND r.status IN (:statuses)")
     List<BorrowRecord> findActiveBorrowsByUserIdsWithDetails(@Param("userIds") List<Long> userIds, @Param("statuses") List<BorrowStatus> statuses);
 }

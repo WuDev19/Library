@@ -27,6 +27,7 @@ class UserServiceImpl implements UserService {
 
     @Override
     public UserCreateResponse createUser(UserCreateRequest request) {
+        log.error("Lỗi gọi API");
         return null;
     }
 
