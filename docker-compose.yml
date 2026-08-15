@@ -245,7 +245,7 @@ services:
 
   lib-frontend:
     build:
-      context: ../lib-frontend
+      context: ./lib-frontend
       dockerfile: Dockerfile
     container_name: lib-frontend
     restart: unless-stopped
