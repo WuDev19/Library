@@ -100,10 +100,10 @@ services:
       CONFIG_SERVER: config-server
       DISCOVERY_SERVER: discovery-server
       REDIS_HOST: redis
+      REDIS_PASS: ${REDIS_PASS}
       DB_HOST_POSTGRES: postgres-db
       DB_USERNAME: auth_user
       DB_PASSWORD: ${AUTH_DB_PASSWORD}
-      REDIS_PASS: ${REDIS_PASS}
       JWT_SECRET_KEY: ${JWT_SECRET_KEY}
     depends_on:
       discovery-server:
@@ -128,6 +128,35 @@ services:
       DB_HOST_POSTGRES: postgres-db
       DB_PASSWORD: ${USER_DB_PASSWORD}
       DB_USERNAME: user_user
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY}
+      REDIS_HOST: redis
+      REDIS_PASS: ${REDIS_PASS}
+    depends_on:
+      discovery-server:
+        condition: service_healthy
+#      config-server:
+#        condition: service_healthy
+      redis:
+        condition: service_healthy
+      postgres-db:
+        condition: service_healthy
+
+  book-borrow-service:
+    build:
+      context: ./BookBorrowService
+      dockerfile: Dockerfile
+    container_name: book-borrow-service
+    ports:
+      - "8083:8083"
+    environment:
+      CONFIG_SERVER: config-server
+      DISCOVERY_SERVER: discovery-server
+      DB_HOST_POSTGRES: postgres-db
+      DB_PASSWORD: ${BOOK_DB_PASSWORD}
+      DB_USERNAME: book_user
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY}
+      REDIS_HOST: redis
+      REDIS_PASS: ${REDIS_PASS}
     depends_on:
       discovery-server:
         condition: service_healthy

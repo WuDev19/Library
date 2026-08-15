@@ -1,6 +1,7 @@
 package com.example.apigateway.fallback;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -17,9 +18,9 @@ public class FallbackController {
     private static final String NOT_AVAILABLE = "Server hiện tại không khả dụng";
 
     @RequestMapping("/fallback")
-    public ResponseEntity<Map<String, Object>> fallback(@RequestParam String service) {
-        log.debug("Service bị lỗi {}", service);
-        return ResponseEntity.ok(Map.of(
+    public ResponseEntity<Map<String, Object>> fallback() {
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(
+                Map.of(
                 CODE, 503,
                 MESSAGE, NOT_AVAILABLE
         ));

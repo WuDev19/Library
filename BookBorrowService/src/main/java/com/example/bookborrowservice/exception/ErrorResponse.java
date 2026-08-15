@@ -1,0 +1,26 @@
+package com.example.bookborrowservice.exception;
+
+import lombok.Getter;
+
+@Getter
+public enum ErrorResponse {
+    DATA_INVALID("Dữ liệu gửi lên không hợp lệ, vui lòng xem lại các trường dữ liệu", 1000),
+    NULL_POINTER("Dữ liệu trống", 1002),
+    PARSE_JSON("Định dạng dữ liệu không hợp lệ", 1004),
+    FIELD_INVALID("Trường dữ liệu gửi lên không hợp lệ", 1005),
+    OBJECT_INVALID("", 1006),
+    RESOURCE_NOT_FOUND("Dữ liệu không tồn tại", 1007),
+    DATA_INTEGRITY("Xung đột dữ liệu", 1009),
+    ACCESS_DENIED("Bạn không có quyền thực hiện thao tác này", 1020),
+    DUE_DATE_INVALID("Hạn trả sách không hợp lệ", 1024),
+    BOOK_OUT_OF_STOCK("Sách đã hết lượt mượn khả dụng", 1025),
+    BORROW_RECORD_NOT_ACTIVE("Phiếu mượn không còn trong trạng thái đang mượn", 1026);
+
+    private final String message;
+    private final int code;
+
+    ErrorResponse(String message, int code) {
+        this.message = message;
+        this.code = code;
+    }
+}
