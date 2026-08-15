@@ -92,10 +92,22 @@ services:
     depends_on:
       discovery-server:
         condition: service_healthy
-#      config-server:
-#        condition: service_healthy
       redis:
         condition: service_healthy
+      auth-service:
+        condition: service_healthy
+      user-service:
+        condition: service_healthy
+      book-borrow-service:
+        condition: service_healthy
+      notification-service:
+        condition: service_healthy
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -s http://localhost:8080/ || exit 0" ]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
 
   auth-service:
     build:
@@ -116,12 +128,16 @@ services:
     depends_on:
       discovery-server:
         condition: service_healthy
-#      config-server:
-#        condition: service_healthy
       redis:
         condition: service_healthy
       postgres-db:
         condition: service_healthy
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -s http://localhost:8081/ || exit 0" ]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 25s
 
   user-service:
     build:
@@ -142,12 +158,16 @@ services:
     depends_on:
       discovery-server:
         condition: service_healthy
-#      config-server:
-#        condition: service_healthy
       redis:
         condition: service_healthy
       postgres-db:
         condition: service_healthy
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -s http://localhost:8082/ || exit 0" ]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 25s
 
   book-borrow-service:
     build:
@@ -168,8 +188,6 @@ services:
     depends_on:
       discovery-server:
         condition: service_healthy
-#      config-server:
-#        condition: service_healthy
       redis:
         condition: service_healthy
       postgres-db:
@@ -180,6 +198,12 @@ services:
         condition: service_healthy
       broker-3:
         condition: service_healthy
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -s http://localhost:8083/ || exit 0" ]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 25s
 
   notification-service:
     build:
@@ -202,8 +226,6 @@ services:
     depends_on:
       discovery-server:
         condition: service_healthy
-      #      config-server:
-      #        condition: service_healthy
       redis:
         condition: service_healthy
       postgres-db:
@@ -213,6 +235,24 @@ services:
       broker-2:
         condition: service_healthy
       broker-3:
+        condition: service_healthy
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -s http://localhost:8084/ || exit 0" ]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 25s
+
+  lib-frontend:
+    build:
+      context: ../lib-frontend
+      dockerfile: Dockerfile
+    container_name: lib-frontend
+    restart: unless-stopped
+    ports:
+      - "3000:80"
+    depends_on:
+      api-gateway-service:
         condition: service_healthy
 
 volumes:
