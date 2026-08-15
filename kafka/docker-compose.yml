@@ -39,6 +39,12 @@ services:
     env_file:
       - ./broker-common.env
       - ./broker-1.env
+    healthcheck:
+      test: [ "CMD-SHELL", "/opt/kafka/bin/kafka-broker-api-versions.sh --bootstrap-server localhost:9092 || exit 1" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
     volumes:
       - broker1-data:/var/lib/kafka/data
 
@@ -52,6 +58,12 @@ services:
     env_file:
       - ./broker-common.env
       - ./broker-2.env
+    healthcheck:
+      test: [ "CMD-SHELL", "/opt/kafka/bin/kafka-broker-api-versions.sh --bootstrap-server localhost:9092 || exit 1" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
     volumes:
       - broker2-data:/var/lib/kafka/data
 
@@ -65,6 +77,12 @@ services:
     env_file:
       - ./broker-common.env
       - ./broker-3.env
+    healthcheck:
+      test: [ "CMD-SHELL", "/opt/kafka/bin/kafka-broker-api-versions.sh --bootstrap-server localhost:9092 || exit 1" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
     volumes:
       - broker3-data:/var/lib/kafka/data
 

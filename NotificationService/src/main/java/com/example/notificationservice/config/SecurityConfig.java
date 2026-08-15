@@ -13,7 +13,6 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.web.SecurityFilterChain;
 
-import java.util.Collections;
 import java.util.List;
 
 @Configuration
@@ -46,16 +45,9 @@ public class SecurityConfig {
     public JwtAuthenticationConverter jwtAuthenticationConverter() {
         JwtAuthenticationConverter converter = new JwtAuthenticationConverter();
         converter.setJwtGrantedAuthoritiesConverter(jwt -> {
-            Object rolesObj = jwt.getClaims().get("roles");
-            if (rolesObj instanceof List<?> roles) {
-                return roles.stream()
-                        .map(Object::toString)
-                        .map(role -> role.startsWith("ROLE_") ? role : "ROLE_" + role)
-                        .map(SimpleGrantedAuthority::new)
-                        .map(auth -> (org.springframework.security.core.GrantedAuthority) auth)
-                        .toList();
-            }
-            return Collections.emptyList();
+            String role = jwt.getClaimAsString("roles");
+            if (role == null || role.isBlank()) return List.of();
+            return List.of(new SimpleGrantedAuthority("ROLE_" + role));
         });
         return converter;
     }
