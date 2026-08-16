@@ -1,12 +1,12 @@
 package com.example.notificationservice.listener;
 
-import com.example.notificationservice.client.UserServiceClient;
+import com.example.notificationservice.client.UserService;
 import com.example.notificationservice.dto.common.ApiResult;
 import com.example.notificationservice.dto.event.NotificationEventPayload;
 import com.example.notificationservice.dto.response.UserResponse;
 import com.example.notificationservice.entity.Notification;
 import com.example.notificationservice.repository.NotificationRepository;
-import com.example.notificationservice.service.impl.EmailServiceImpl;
+import com.example.notificationservice.service.base.IEmailService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -23,8 +23,8 @@ import java.time.OffsetDateTime;
 public class NotificationKafkaListener {
 
     private final NotificationRepository notificationRepository;
-    private final UserServiceClient userServiceClient;
-    private final EmailServiceImpl emailServiceImpl;
+    private final UserService userService;
+    private final IEmailService emailService;
     private final ObjectMapper objectMapper;
 
     @KafkaListener(topics = "notification-events", groupId = "notification-group")
@@ -58,7 +58,7 @@ public class NotificationKafkaListener {
             String userEmail = null;
             String fullName = null;
             try {
-                ApiResult<UserResponse> userApiResult = userServiceClient.getUserById(payload.userId());
+                ApiResult<UserResponse> userApiResult = userService.getUserById(payload.userId());
                 if (userApiResult != null && userApiResult.getData() != null) {
                     userEmail = userApiResult.getData().email();
                     fullName = userApiResult.getData().fullName();
@@ -69,7 +69,7 @@ public class NotificationKafkaListener {
 
             if (userEmail != null && !userEmail.isBlank()) {
                 try {
-                    emailServiceImpl.sendNotificationEmail(userEmail, fullName, payload);
+                    emailService.sendNotificationEmail(userEmail, fullName, payload);
                 } catch (Exception e) {
                     log.error("[Email Error] Không thể gửi email cho userId={}: {}", payload.userId(), e.getMessage());
                 }
