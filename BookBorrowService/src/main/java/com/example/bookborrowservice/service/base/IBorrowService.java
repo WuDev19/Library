@@ -22,4 +22,6 @@ public interface IBorrowService {
     Map<Long, List<BorrowedBookResponse>> getActiveBorrowsByUserIds(List<Long> userIds);
 
     Map<String, Object> scanOverdueBorrows();
+
+
 }

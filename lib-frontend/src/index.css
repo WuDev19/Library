@@ -294,6 +294,14 @@ body {
   overflow: hidden;
 }
 
+.modal-card form {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
 .modal-header {
   flex-shrink: 0;
   padding: 18px 24px;
@@ -328,6 +336,7 @@ body {
   padding: 24px;
   overflow-y: auto;
   flex: 1;
+  min-height: 0;
 }
 
 .modal-footer {
