@@ -1,6 +1,7 @@
 package com.example.bookborrowservice.controller;
 
 import com.example.bookborrowservice.constants.Constants;
+import com.example.bookborrowservice.constants.StringCommon;
 import com.example.bookborrowservice.dto.common.ApiResponse;
 import com.example.bookborrowservice.dto.common.ApiResult;
 import com.example.bookborrowservice.dto.common.CRUDResponseHelper;
@@ -8,6 +9,8 @@ import com.example.bookborrowservice.dto.request.BookImportRequest;
 import com.example.bookborrowservice.dto.request.BookRequest;
 import com.example.bookborrowservice.dto.response.BookResponse;
 import com.example.bookborrowservice.service.base.IBookService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -19,6 +22,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Map;
 
+@SecurityRequirement(name = StringCommon.SECURITY_SCHEME)
 @RestController
 @RequestMapping("/books")
 @RequiredArgsConstructor
@@ -26,6 +30,7 @@ public class BookController {
 
     private final IBookService bookService;
 
+    @Operation(summary = "Api cho librarian tạo đầu sách mới")
     @PostMapping
     @PreAuthorize("hasRole('LIBRARIAN')")
     public ResponseEntity<ApiResult<Map<String, Object>>> createBook(@Valid @RequestBody BookRequest request) {
@@ -37,6 +42,7 @@ public class BookController {
         );
     }
 
+    @Operation(summary = "Api cho librarian cập nhật đầu sách")
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('LIBRARIAN')")
     public ResponseEntity<ApiResult<Map<String, Object>>> updateBook(
@@ -51,6 +57,7 @@ public class BookController {
         );
     }
 
+    @Operation(summary = "Api cho librarian xóa đầu sách")
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('LIBRARIAN')")
     public ResponseEntity<ApiResult<Map<String, Object>>> deleteBook(@PathVariable Long id) {
@@ -62,6 +69,7 @@ public class BookController {
         );
     }
 
+    @Operation(summary = "Api cho user lấy đầu sách chi tiết")
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('LIBRARIAN', 'BORROWER')")
     public ResponseEntity<ApiResult<BookResponse>> getBookById(@PathVariable Long id) {
@@ -73,6 +81,7 @@ public class BookController {
         );
     }
 
+    @Operation(summary = "Api cho user lấy tất cả đầu sách")
     @GetMapping
     @PreAuthorize("hasAnyRole('LIBRARIAN', 'BORROWER')")
     public ResponseEntity<ApiResult<List<BookResponse>>> getAllBooks() {
@@ -84,6 +93,7 @@ public class BookController {
         );
     }
 
+    @Operation(summary = "Api cho user tìm kiếm đầu sách")
     @GetMapping("/search")
     @PreAuthorize("hasAnyRole('LIBRARIAN', 'BORROWER')")
     public ResponseEntity<ApiResult<List<BookResponse>>> searchBooks(
@@ -98,6 +108,7 @@ public class BookController {
         );
     }
 
+    @Operation(summary = "Api cho user tìm kiếm đầu sách theo danh mục")
     @GetMapping("/by-category/{categoryCode}")
     @PreAuthorize("hasAnyRole('LIBRARIAN', 'BORROWER')")
     public ResponseEntity<ApiResult<List<BookResponse>>> getBooksByCategoryCode(@PathVariable String categoryCode) {
@@ -109,6 +120,7 @@ public class BookController {
         );
     }
 
+    @Operation(summary = "Api cho librarian nhập thêm đầu sách mới")
     @PostMapping("/import")
     @PreAuthorize("hasRole('LIBRARIAN')")
     public ResponseEntity<ApiResult<Map<String, Object>>> importBooks(

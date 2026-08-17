@@ -7,6 +7,8 @@ import com.example.notificationservice.dto.common.CRUDResponseHelper;
 import com.example.notificationservice.dto.response.NotificationResponse;
 import com.example.notificationservice.service.base.INotificationService;
 import com.example.notificationservice.utils.StringCommon;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -17,6 +19,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Map;
 
+@SecurityRequirement(name = StringCommon.SECURITY_SCHEME)
 @RestController
 @RequestMapping
 @RequiredArgsConstructor
@@ -24,6 +27,7 @@ public class NotificationController {
 
     private final INotificationService notificationService;
 
+    @Operation(summary = "Api cho user lấy danh sách thông báo của mình")
     @GetMapping
     @PreAuthorize("hasAnyRole('LIBRARIAN', 'BORROWER')")
     public ResponseEntity<ApiResult<List<NotificationResponse>>> getMyNotifications(@AuthenticationPrincipal Jwt jwt) {
@@ -36,6 +40,7 @@ public class NotificationController {
         );
     }
 
+    @Operation(summary = "Api cho user đánh dấu đã đọc thông báo")
     @PutMapping("/{id}/read")
     @PreAuthorize("hasAnyRole('LIBRARIAN', 'BORROWER')")
     public ResponseEntity<ApiResult<Map<String, Object>>> markAsRead(

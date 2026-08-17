@@ -20,7 +20,7 @@ public class MyJwtDecoder implements JwtDecoder {
     private final RedisTemplate<String, Object> redisTemplate;
 
     public MyJwtDecoder(
-            @Value("${jwt.secret-key}") String JWT_SECRET_KEY,
+            @Value("${JWT_SECRET_KEY}") String JWT_SECRET_KEY,
             RedisTemplate<String, Object> redisTemplate
     ) {
         this.jwtDecoder = NimbusJwtDecoder

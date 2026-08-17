@@ -1,6 +1,7 @@
 package com.example.bookborrowservice.controller;
 
 import com.example.bookborrowservice.constants.Constants;
+import com.example.bookborrowservice.constants.StringCommon;
 import com.example.bookborrowservice.dto.common.ApiResponse;
 import com.example.bookborrowservice.dto.common.ApiResult;
 import com.example.bookborrowservice.dto.common.CRUDResponseHelper;
@@ -11,6 +12,8 @@ import com.example.bookborrowservice.dto.response.BorrowedBookResponse;
 import com.example.bookborrowservice.exception.BusinessException;
 import com.example.bookborrowservice.exception.ErrorResponse;
 import com.example.bookborrowservice.service.base.IBorrowService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -22,6 +25,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Map;
 
+@SecurityRequirement(name = StringCommon.SECURITY_SCHEME)
 @RestController
 @RequestMapping("/borrows")
 @RequiredArgsConstructor
@@ -29,6 +33,7 @@ public class BorrowController {
 
     private final IBorrowService borrowService;
 
+    @Operation(summary = "Api cho user mượn sách")
     @PostMapping
     @PreAuthorize("hasAnyRole('LIBRARIAN', 'BORROWER')")
     public ResponseEntity<ApiResult<Map<String, Object>>> borrowBook(
@@ -49,6 +54,10 @@ public class BorrowController {
         );
     }
 
+    @Operation(
+            summary = "Api cho librarien trả sách",
+            description = "Borrower sẽ ko có quyền trả sách online mà sẽ phải đem đến quầy để trả và librarian sẽ xác nhận"
+    )
     @PostMapping("/return")
     @PreAuthorize("hasRole('LIBRARIAN')")
     public ResponseEntity<ApiResult<Map<String, Object>>> returnBook(
@@ -64,6 +73,7 @@ public class BorrowController {
         );
     }
 
+    @Operation(summary = "Api cho user lấy danh sách các sách được mượn")
     @GetMapping
     @PreAuthorize("hasAnyRole('LIBRARIAN', 'BORROWER')")
     public ResponseEntity<ApiResult<List<BorrowRecordResponse>>> getBorrowRecords(@AuthenticationPrincipal Jwt jwt) {
@@ -82,6 +92,7 @@ public class BorrowController {
         );
     }
 
+    @Operation(summary = "Api cho phép lấy bản mượn chi tiết")
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('LIBRARIAN', 'BORROWER')")
     public ResponseEntity<ApiResult<BorrowRecordResponse>> getBorrowRecordById(
@@ -104,12 +115,14 @@ public class BorrowController {
         );
     }
 
+    @Operation(summary = "Api lấy danh sách đã mượn của user")
     @PostMapping("/active-by-users")
     @PreAuthorize("hasAnyRole('LIBRARIAN', 'SYSTEM')")
     public Map<Long, List<BorrowedBookResponse>> getActiveBorrowsByUserIds(@RequestBody List<Long> userIds) {
         return borrowService.getActiveBorrowsByUserIds(userIds);
     }
 
+    @Operation(summary = "Api cho phép librarian gửi thông báo về hạn mượn sách")
     @PostMapping("/scan-overdue")
     @PreAuthorize("hasRole('LIBRARIAN')")
     public ResponseEntity<ApiResult<Map<String, Object>>> scanOverdueBorrows() {

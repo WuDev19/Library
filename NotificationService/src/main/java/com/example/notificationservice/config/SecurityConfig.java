@@ -22,6 +22,11 @@ import java.util.List;
 public class SecurityConfig {
 
     private final MyJwtDecoder myJwtDecoder;
+    private final String[] publicEndpoint = {
+            "/swagger-ui.html",
+            "/api-docs/**",
+            "/swagger-ui/**",
+    };
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) {
@@ -29,6 +34,7 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(publicEndpoint).permitAll()
                         .anyRequest().authenticated()
                 )
                 .oauth2ResourceServer(oauth2 -> oauth2

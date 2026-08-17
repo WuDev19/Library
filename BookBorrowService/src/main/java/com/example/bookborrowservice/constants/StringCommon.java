@@ -14,4 +14,7 @@ public class StringCommon {
     public static final String CREATED_AT = "createdAt";
     public static final String UPDATED_AT = "updatedAt";
     public static final String DATE_TIME_FORMAT_NO_TZ = "dd-MM-yyyy HH:mm:ss";
+    public static final String AUTHORIZATION = "Authorization";
+    public static final String SECURITY_SCHEME = "bearerAuth";
+
 }
