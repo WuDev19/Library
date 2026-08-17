@@ -6,28 +6,14 @@ Hệ thống hỗ trợ phân quyền người dùng (Thủ thư & Độc giả)
 
 ---
 
-## 📐 1. Thiết Kế Mức Cao (High-Level Design - HLD)
-
-### 1.1. Tổng Quan Kiến Trúc & Nguyên Lý Cốt Lõi (Architectural Principles)
-Hệ thống Quản lý Thư viện được thiết kế theo chuẩn kiến trúc **Microservices hiện đại (Distributed Cloud-Native Architecture)** nhằm đảm bảo tính độc lập phát triển, khả năng mở rộng ngang (Horizontal Scalability), tính sẵn sàng cao (High Availability) và khả năng chịu lỗi (Fault Tolerance).
-
-Các nguyên lý thiết kế hệ thống bao gồm:
-- **Database-per-Service**: Mỗi microservice sở hữu cơ sở dữ liệu riêng biệt (`auth_db`, `user_db`, `book_db`, `notification_db`), ngăn chặn truy cập chéo trực tiếp ở tầng dữ liệu và loại bỏ sự phụ thuộc chặt (Tight Coupling).
-- **API Gateway Pattern**: Triển khai `Spring Cloud Gateway` làm Single Entry Point duy nhất cho toàn bộ giao tiếp từ khách hàng/frontend. Tích hợp trung tâm xác thực JWT Filter, định tuyến động (Dynamic Routing), giới hạn tần suất (Rate Limiting) và ngắt mạch tự động (Circuit Breaker).
-- **Centralized Service Discovery**: Triển khai `Netflix Eureka Server` để quản lý đăng ký động và phát hiện vị trí dịch vụ (IP/Port), hỗ trợ Client-side Load Balancing linh hoạt.
-- **Event-Driven Architecture (EDA)**: Sử dụng **Apache Kafka Cluster** để truyền tin và xử lý sự kiện bất đồng bộ giữa các dịch vụ. Giảm nợ phụ thuộc synchronous REST call, cải thiện response time (Low Latency) cho các thao tác nghiệp vụ chính.
-- **Transactional Outbox Pattern**: Đảm bảo tính nhất quán dữ liệu (Eventual Consistency) giữa ghi dữ liệu vào PostgreSQL và phát sự kiện ra Kafka mà không gây mất mát tin nhắn ngay cả khi dịch vụ gặp sự cố crash đột ngột.
-
----
-
-### 1.2. Sơ Đồ Tổng Quan Kiến Trúc (System Architecture Diagram)
+## 🚀 1. Kiến Trúc Hệ Thống (Architecture)
 
 ```
                                     +-----------------------+
                                     |     React Frontend    |
-                                    |  (Vite / TypeScript)  |
+                                    |    (Port 3000 / Nginx)|
                                     +-----------+-----------+
-                                                | (HTTPS / REST)
+                                                |
                                                 v
                                     +-----------------------+
                                     |      API Gateway      |
@@ -35,136 +21,40 @@ Các nguyên lý thiết kế hệ thống bao gồm:
                                     +-----------+-----------+
                                                 |
             +-----------------------------------+-----------------------------------+
-            | (Auth Verification & Dynamic Proxy)                                   |
+            |                                   |                                   |
             v                                   v                                   v
   +-------------------+               +-------------------+               +-------------------+
   |   Auth Service    |               |   User Service    |               |Book Borrow Service|
   |    (Port 8081)    |               |    (Port 8082)    |               |    (Port 8083)    |
   +---------+---------+               +---------+---------+               +---------+---------+
             |                                   |                                   |
-            | (Redis Token                      |                                   | (Transactional Outbox)
-            |  Blacklist)                       v                                   v
-            v                         +-------------------+               +-------------------+
-  +-------------------+               |  PostgreSQL / DB  |               |  PostgreSQL / DB  |
-  |    Redis Cache    |               |     (user_db)     |               |     (book_db)     |
-  |    (Port 6379)    |               +-------------------+               +---------+---------+
-  +---------+---------+                                                             |
-            ^                                                                       | (Publish Events)
-            | (Rate Limit Data)                                                     v
-  +---------+---------+                                                   +-------------------+
-  |  PostgreSQL / DB  |                                                   |   Kafka Cluster   |
-  |     (auth_db)     |                                                   | (3 Brokers / ZK)  |
-  +-------------------+                                                   +---------+---------+
-                                                                                    |
-                                                                                    | (Consume Events)
+            v                                   v                                   v
+  +-------------------+               +-------------------+               +-------------------+
+  |  PostgreSQL / DB  |               |  PostgreSQL / DB  |               |  PostgreSQL / DB  |
+  |     (auth_db)     |               |     (user_db)     |               |     (book_db)     |
+  +-------------------+               +-------------------+               +---------+---------+
+                                                                                    | (Events)
                                                                                     v
                                                                           +-------------------+
-                                                                          |NotificationService|
-                                                                          |    (Port 8084)    |
+                                                                          |   Kafka Cluster   |
+                                                                          | (Broker 1, 2, 3)  |
                                                                           +---------+---------+
                                                                                     |
                                                                                     v
                                                                           +-------------------+
-                                                                          |  PostgreSQL / DB  |
-                                                                          | (notification_db) |
+                                                                          |NotificationService|
+                                                                          |    (Port 8084)    |
                                                                           +-------------------+
 ```
 
----
-
-### 1.3. Các Dịch Vụ Thành Phần & Trách Nhiệm (Core Microservices)
-
-| Dịch vụ | Cổng (Port) | Trách nhiệm chính (Core Responsibilities) | Cơ sở dữ liệu & Công nghệ |
-| :--- | :--- | :--- | :--- |
-| **API Gateway** | `8080` | Entry point duy nhất, định tuyến request, JWT Authentication Filter, Rate Limiting, Resilience4j Circuit Breaker. | Spring Cloud Gateway, Redis |
-| **Discovery Server** | `8761` | Service Registry & Discovery, quản lý danh sách và theo dõi trạng thái sức khỏe (Healthcheck) của các dịch vụ. | Netflix Eureka Server |
-| **Auth Service** | `8081` | Đăng ký, đăng nhập, mã hóa BCrypt, cấp phát JWT Access & Refresh Token, vô hiệu hóa Token khi Logout. | Spring Security, JWT, PostgreSQL (`auth_db`), Redis |
-| **User Service** | `8082` | Quản lý hồ sơ người dùng (thông tin cá nhân, vai trò Thủ thư/Độc giả, địa chỉ, số điện thoại). | Spring Data JPA, PostgreSQL (`user_db`) |
-| **Book Borrow Service** | `8083` | Quản lý danh mục sách, số lượng bản sao (BookCopy), tạo phiếu mượn/trả sách, tính hạn trả & tiền phạt quá hạn. | Spring Data JPA, Flyway, PostgreSQL (`book_db`), Kafka Producer |
-| **Notification Service** | `8084` | Consumer tiêu thụ sự kiện từ Kafka (`borrow-events`, `overdue-events`), tự động gửi Email và lưu thông báo In-App. | Spring Mail, Kafka Consumer, PostgreSQL (`notification_db`) |
-| **Lib Frontend** | `3000` | Giao diện React SPA (Vite/TypeScript) tối ưu trải nghiệm người dùng, tương tác đầy đủ tính năng cho Thủ thư & Độc giả. | React 18, TypeScript, Vanilla CSS Tokens, Nginx |
-
----
-
-### 1.4. Mô Hình Giao Tiếp & Luồng Dữ Liệu (Data Flow & Communication Patterns)
-
-#### 🔄 A. Giao tiếp Đồng bộ (Synchronous Communication - HTTP/REST)
-- **Luồng Request của Người dùng**: Client gửi HTTP Request tới **API Gateway** -> API Gateway thực hiện xác thực Token JWT -> Tra cứu vị trí service từ **Eureka Discovery Server** -> Chuyển tiếp Request (Proxy Routing) đến microservice mục tiêu.
-- **Mẫu Ngắt mạch (Circuit Breaker Pattern)**: Khi dịch vụ backend quá tải hoặc gián đoạn, Resilience4j trên API Gateway sẽ tự động ngắt mạch (Circuit Open) và trả về phản hồi fallback nhanh chóng thay vì gây tắc nghẽn hệ thống.
-
-#### ⚡ B. Giao tiếp Bất đồng bộ & Hướng sự kiện (Asynchronous Event-Driven via Kafka)
-Khi xảy ra các thao tác nghiệp vụ quan trọng (ví dụ: Độc giả mượn sách thành công hoặc Hệ thống phát hiện phiếu mượn quá hạn):
-1. **Book Borrow Service** lưu thông tin mượn sách vào `book_db` đồng thời lưu sự kiện vào bảng `outbox_events` trong cùng **1 Database Transaction**.
-2. Background worker (**Outbox Publisher**) quét các sự kiện chưa phát từ `outbox_events` và publish tin nhắn tới **Kafka Cluster** (Topic: `borrow-events`).
-3. **Notification Service** (Consumer Group) nhận tin nhắn từ Kafka Topic, thực hiện:
-   - Gửi Email xác nhận/nhắc nhở tự động cho Độc giả qua SMTP Mail Server.
-   - Lưu thông báo vào `notification_db` để hiển thị trên hộp thư In-App của Frontend.
-
-```mermaid
-sequenceDiagram
-    autonumber
-    actor User as Độc giả / Thủ thư
-    participant GW as API Gateway (8080)
-    participant BB as BookBorrowService (8083)
-    participant DB as PostgreSQL (book_db)
-    participant Outbox as Outbox Publisher Worker
-    participant Kafka as Kafka Cluster
-    participant NS as NotificationService (8084)
-    participant Email as SMTP Email Server
-
-    User->>GW: POST /api/v1/borrows (Tạo phiếu mượn)
-    GW->>GW: Xác thực JWT Token & Check Rate Limit
-    GW->>BB: Proxy Request đến BookBorrowService
-    BB->>DB: Ghi BorrowRecord & Ghi OutboxEvent (1 Transaction)
-    DB-->>BB: Commit Transaction thành công
-    BB-->>GW: Trả về HTTP 201 Created
-    GW-->>User: Hiển thị kết quả mượn sách thành công
-
-    par Async Event Processing
-        Outbox->>DB: Quét bảng outbox_events (Pending)
-        Outbox->>Kafka: Publish Event (Topic: borrow-events)
-        Outbox->>DB: Đánh dấu Event Status = PROCESSED
-        Kafka->>NS: Consume Event Message
-        NS->>Email: Gửi Email xác nhận mượn sách
-        NS->>DB: Lưu In-App Notification (notification_db)
-    end
-```
-
----
-
-### 1.5. Mô Hình Dữ Liệu & Phân Lập Storage (Database Architecture)
-
-Hệ thống tuân thủ nghiêm ngặt mô hình **Database-per-Service**:
-
-```
-+-----------------------------------------------------------------------------------+
-|                                 DATABASE ARCHITECTURE                              |
-+-------------------+ +-------------------+ +-------------------+ +-----------------+
-|     auth_db       | |      user_db      | |      book_db      | | notification_db |
-+-------------------+ +-------------------+ +-------------------+ +-----------------+
-| - users_auth      | | - user_profiles   | | - books           | | - notifications |
-| - roles           | | - addresses       | | - book_copies     | | - email_logs    |
-| - user_roles      | +-------------------+ | - categories      | +-----------------+
-+-------------------+                       | - borrow_records  |
-                                            | - borrow_details  |
-                                            | - outbox_events   |
-                                            +-------------------+
-```
-
-- **Redis Cache (`6379`)**:
-  - Lưu **Blacklist Tokens** (vô hiệu hóa tức thì JWT Access Token khi user đăng xuất).
-  - Quản lý **Rate Limiting Counter** cho API Gateway.
-  - Cache dữ liệu danh mục sách nâng cao hiệu năng truy vấn.
-
----
-
-### 1.6. Bảo Mật & Phân Quyền Hệ Thống (Security Architecture)
-
-- **Stateless Authentication**: Sử dụng chuẩn JWT (JSON Web Token) bao gồm Access Token (thời hạn ngắn, 15 - 60 phút) và Refresh Token (thời hạn dài, 7 ngày).
-- **Role-Based Access Control (RBAC)**:
-  - **`LIBRARIAN`**: Quyền quản trị toàn diện - Quản lý sách, quản lý bản sao, lập phiếu mượn/trả, xem danh sách người dùng, báo cáo thống kê.
-  - **`BORROWER`**: Quyền độc giả - Tìm kiếm kho sách, mượn sách trực tuyến, xem lịch sử mượn trả cá nhân, nhận thông báo.
-- **Centralized Security Enforcement**: API Gateway đứng ở vị trí tiền đồn giải mã và xác thực Token trước khi chuyển request vào mạng nội bộ microservices.
+### Các dịch vụ thành phần:
+- **Discovery Server (Eureka - Port 8761)**: Quản lý đăng ký và phát hiện dịch vụ (Service Registry & Discovery).
+- **API Gateway (Port 8080)**: Cổng giao tiếp trung tâm, định tuyến động, Rate Limiting (Redis), Circuit Breaker (Resilience4j) và xác thực JWT.
+- **Auth Service (Port 8081)**: Quản lý tài khoản, mã hóa mật khẩu (BCrypt), cấp phát JWT & Refresh Token, blacklist token trên Redis.
+- **User Service (Port 8082)**: Quản lý thông tin hồ sơ độc giả và thủ thư.
+- **Book Borrow Service (Port 8083)**: Quản lý danh mục sách, số lượng bản sao (copies), quy trình mượn - trả sách, tính toán nợ/quá hạn và phát sự kiện qua Kafka (Outbox Pattern).
+- **Notification Service (Port 8084)**: Lắng nghe sự kiện từ Kafka để tự động gửi Email thông báo và lưu trữ hộp thư thông báo in-app.
+- **Lib Frontend (Port 3000)**: Giao diện người dùng React (Vite/TypeScript) với trải nghiệm phản hồi nhanh, hỗ trợ đầy đủ tính năng cho Thủ thư & Độc giả.
 
 ---
 
