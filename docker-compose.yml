@@ -12,7 +12,6 @@ services:
       - postgres_data:/var/lib/postgresql/data
       - ./postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
     environment:
-      - POSTGRES_DB=postgres
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=${DB_PASSWORD}
     healthcheck:
@@ -185,6 +184,10 @@ services:
       JWT_SECRET_KEY: ${JWT_SECRET_KEY}
       REDIS_HOST: redis
       REDIS_PASS: ${REDIS_PASS}
+      BROKER_1: broker-1:19092
+      BROKER_2: broker-2:19092
+      BROKER_3: broker-3:19092
+
     depends_on:
       discovery-server:
         condition: service_healthy
@@ -223,6 +226,9 @@ services:
       REDIS_PASS: ${REDIS_PASS}
       APP_EMAIL: ${APP_EMAIL}
       APP_EMAIL_PASSWORD: ${APP_EMAIL_PASSWORD}
+      BROKER_1: broker-1:19092
+      BROKER_2: broker-2:19092
+      BROKER_3: broker-3:19092
     depends_on:
       discovery-server:
         condition: service_healthy
