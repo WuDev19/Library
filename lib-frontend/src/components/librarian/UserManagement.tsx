@@ -4,7 +4,6 @@ import type { User, BorrowRecord } from '../../types';
 interface UserManagementProps {
   users: User[];
   allBorrows?: BorrowRecord[];
-  onOpenCreateUser: () => void;
   onOpenEditUser: (user: User) => void;
   onDeleteUser: (userId: number) => void;
   onSearchUsers: (keyword: string) => void;
@@ -13,7 +12,6 @@ interface UserManagementProps {
 export const UserManagement: React.FC<UserManagementProps> = ({
   users,
   allBorrows = [],
-  onOpenCreateUser,
   onOpenEditUser,
   onDeleteUser,
   onSearchUsers,
@@ -103,9 +101,6 @@ export const UserManagement: React.FC<UserManagementProps> = ({
             <i className="fa-solid fa-magnifying-glass"></i> Tìm kiếm
           </button>
         </form>
-        <button className="btn btn-primary" onClick={onOpenCreateUser}>
-          <i className="fa-solid fa-user-plus"></i> Thêm Người Dùng
-        </button>
       </div>
 
       <div className="glass-card" style={{ padding: '24px' }}>

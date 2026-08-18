@@ -5,7 +5,7 @@ interface UserModalProps {
   isOpen: boolean;
   editingUser: User | null;
   onClose: () => void;
-  onSave: (data: { userId?: number; fullName: string; email: string; phone: string }) => void;
+  onSave: (data: { userId?: number; fullName: string; phone: string }) => void;
 }
 
 export const UserModal: React.FC<UserModalProps> = ({
@@ -15,18 +15,15 @@ export const UserModal: React.FC<UserModalProps> = ({
   onSave,
 }) => {
   const [fullName, setFullName] = useState('');
-  const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
 
   useEffect(() => {
     if (editingUser) {
       setFullName(editingUser.fullName || editingUser.username || '');
-      setEmail(editingUser.email || '');
       setPhone(editingUser.phone || editingUser.phoneNumber || '');
     } else {
       setFullName('');
-      setEmail('');
-      setPhone('0912345678');
+      setPhone('');
     }
   }, [editingUser]);
 
@@ -38,7 +35,6 @@ export const UserModal: React.FC<UserModalProps> = ({
     onSave({
       userId: editingUser?.userId || editingUser?.id,
       fullName: fullName.trim(),
-      email: email.trim(),
       phone: phone.trim(),
     });
   };
@@ -48,8 +44,7 @@ export const UserModal: React.FC<UserModalProps> = ({
       <div className="modal-card">
         <div className="modal-header">
           <h3>
-            <i className="fa-solid fa-user-gear"></i>{' '}
-            {editingUser ? 'Cập Nhật Thông Tin Người Dùng' : 'Tạo Hồ Sơ Người Dùng Mới'}
+            <i className="fa-solid fa-user-gear"></i> Cập Nhật Thông Tin Người Dùng
           </h3>
           <button className="modal-close" onClick={onClose}>
             <i className="fa-solid fa-xmark"></i>
@@ -57,6 +52,17 @@ export const UserModal: React.FC<UserModalProps> = ({
         </div>
         <form onSubmit={handleSubmit}>
           <div className="modal-body">
+            {editingUser?.email && (
+              <div className="form-group">
+                <label>Email</label>
+                <input
+                  type="email"
+                  value={editingUser.email}
+                  disabled
+                  style={{ opacity: 0.7, cursor: 'not-allowed' }}
+                />
+              </div>
+            )}
             <div className="form-group">
               <label>Họ và tên *</label>
               <input
@@ -64,16 +70,6 @@ export const UserModal: React.FC<UserModalProps> = ({
                 placeholder="Ví dụ: Nguyễn Văn An"
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
-                required
-              />
-            </div>
-            <div className="form-group">
-              <label>Email *</label>
-              <input
-                type="email"
-                placeholder="example@gmail.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
                 required
               />
             </div>
@@ -93,7 +89,7 @@ export const UserModal: React.FC<UserModalProps> = ({
               Hủy
             </button>
             <button type="submit" className="btn btn-primary">
-              {editingUser ? 'Lưu Thay Đổi' : 'Tạo Người Dùng'}
+              Lưu Thay Đổi
             </button>
           </div>
         </form>

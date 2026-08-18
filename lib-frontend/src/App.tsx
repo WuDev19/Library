@@ -216,19 +216,11 @@ const MainApp: React.FC = () => {
   };
 
   // --- Handlers for User Operations (UserService) ---
-  const handleSaveUser = async (data: { userId?: number; fullName: string; email: string; phone: string }) => {
+  const handleSaveUser = async (data: { userId?: number; fullName: string; phone: string }) => {
     try {
       if (data.userId) {
         await userApi.updateUser(data.userId, { fullName: data.fullName, phone: data.phone });
         showToast('Cập nhật thông tin người dùng thành công!');
-      } else {
-        await userApi.createUser({
-          userId: Date.now(),
-          email: data.email,
-          fullName: data.fullName,
-          phone: data.phone,
-        });
-        showToast('Tạo tài khoản người dùng mới thành công!');
       }
       setIsUserModalOpen(false);
       setEditingUser(null);
@@ -456,10 +448,6 @@ const MainApp: React.FC = () => {
                 <UserManagement
                   users={users}
                   allBorrows={borrows}
-                  onOpenCreateUser={() => {
-                    setEditingUser(null);
-                    setIsUserModalOpen(true);
-                  }}
                   onOpenEditUser={(u) => {
                     setEditingUser(u);
                     setIsUserModalOpen(true);
