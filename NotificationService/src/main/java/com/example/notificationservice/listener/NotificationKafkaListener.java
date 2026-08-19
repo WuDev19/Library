@@ -1,9 +1,11 @@
 package com.example.notificationservice.listener;
 
+import com.example.grpc.user.v1.GetUserRequest;
+import com.example.grpc.user.v1.UserResponse;
+import com.example.grpc.user.v1.UserServiceGrpc;
 import com.example.notificationservice.client.UserService;
 import com.example.notificationservice.dto.common.ApiResult;
 import com.example.notificationservice.dto.event.NotificationEventPayload;
-import com.example.notificationservice.dto.response.UserResponse;
 import com.example.notificationservice.entity.Notification;
 import com.example.notificationservice.repository.NotificationRepository;
 import com.example.notificationservice.service.base.IEmailService;
@@ -26,6 +28,7 @@ public class NotificationKafkaListener {
     private final UserService userService;
     private final IEmailService emailService;
     private final ObjectMapper objectMapper;
+    private final UserServiceGrpc.UserServiceBlockingStub stub;
 
     @KafkaListener(topics = "notification-events", groupId = "notification-group")
     @Transactional
@@ -58,10 +61,16 @@ public class NotificationKafkaListener {
             String userEmail = null;
             String fullName = null;
             try {
-                ApiResult<UserResponse> userApiResult = userService.getUserById(payload.userId());
-                if (userApiResult != null && userApiResult.getData() != null) {
-                    userEmail = userApiResult.getData().email();
-                    fullName = userApiResult.getData().fullName();
+                UserResponse userApiResult = stub.getUser(GetUserRequest.newBuilder()
+                        .setUserId(payload.userId())
+                        .build()
+                );
+                if (userApiResult != null) {
+                    userEmail = userApiResult.getEmail();
+                    fullName = userApiResult.getFullName();
+                    log.debug("Email: " + userEmail + "\n" + "FullName: " + fullName);
+                } else {
+                    log.error("Lỗi gọi GRPC");
                 }
             } catch (Exception e) {
                 log.warn("[UserService Feign Error] Không thể lấy thông tin user cho userId={}: {}", payload.userId(), e.getMessage());
