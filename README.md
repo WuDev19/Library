@@ -7,73 +7,10 @@ Hệ thống Quản lý Thư viện là một nền tảng enterprise được x
 
 ## 🏛️ 1. Kiến Trúc Tổng Quan (System Architecture)
 
-Hệ thống bao gồm 7 dịch vụ độc lập được container hóa bằng Docker, giao tiếp bất đồng bộ qua **Apache Kafka** (Event Streaming) và đồng bộ qua **RESTful API / gRPC / OpenFeign** điều phối bởi **API Gateway** & **Eureka Service Discovery**.
+Hệ thống bao gồm 7 dịch vụ độc lập được container hóa bằng Docker, giao tiếp bất đồng bộ qua **Apache Kafka** và đồng bộ qua **RESTful API** điều phối bởi **API Gateway** & **Eureka Service Discovery**.
 
 ### 📊 Sơ Đồ Kiến Trúc Tổng Quan (System Architecture Diagram)
-
-```mermaid
-flowchart TD
-    Client["📱 Client Layer\n(React 18 Frontend - Port 3000 / Nginx)"]
-    
-    subgraph Gateway ["🚪 Gateway & Security"]
-        GW["API Gateway\n(Spring Cloud Gateway - Port 8080)"]
-    end
-    
-    subgraph ServiceMesh ["🔎 Infra & Service Discovery"]
-        Eureka["Eureka Discovery Server\n(Port 8761)"]
-        Redis[("⚡ Redis Cache & Blacklist\n(Port 6379)")]
-        Kafka[["📨 Apache Kafka Cluster\n(Topic: notification-events)"]]
-        SMTP["📧 SMTP Email Server"]
-    end
-    
-    subgraph Microservices ["⚙️ Microservices Core"]
-        AuthSvc["🔐 Auth Service\n(Port 8081)"]
-        UserSvc["👤 User Service\n(Port 8082 - gRPC Port 9090)"]
-        BookSvc["📚 Book Borrow Service\n(Port 8083)"]
-        NotifSvc["🔔 Notification Service\n(Port 8084)"]
-    end
-
-    subgraph DatabaseLayer ["🗄️ Database Layer (PostgreSQL 16 - Port 5432)"]
-        AuthDB[("auth_db")]
-        UserDB[("user_db")]
-        BookDB[("book_db")]
-        NotifDB[("notification_db")]
-    end
-
-    %% Client Routing
-    Client -->|HTTP / REST| GW
-
-    %% Gateway Security & Routing
-    GW -->|JWT Validation & Rate Limit| Redis
-    GW -.->|Service Lookup| Eureka
-    GW -->|/api/v1/auth/**| AuthSvc
-    GW -->|/api/v1/user/**| UserSvc
-    GW -->|/api/v1/books/**, /borrows/**| BookSvc
-
-    %% Service Registration
-    AuthSvc -.-> Eureka
-    UserSvc -.-> Eureka
-    BookSvc -.-> Eureka
-    NotifSvc -.-> Eureka
-
-    %% Inter-Service Communication (Synchronous)
-    AuthSvc -->|OpenFeign (User Profile Sync)| UserSvc
-    UserSvc -->|OpenFeign (Active Borrow Status)| BookSvc
-    NotifSvc -->|gRPC Call (UserServiceGrpc)| UserSvc
-
-    %% Service Databases
-    AuthSvc --> AuthDB
-    UserSvc --> UserDB
-    BookSvc --> BookDB
-    NotifSvc --> NotifDB
-
-    %% Event-Driven Async Streaming (Outbox Pattern)
-    BookSvc -->|Publish Events (Outbox Pattern)| Kafka
-    Kafka -->|Consume Events (notification-group)| NotifSvc
-    NotifSvc -->|Send Email| SMTP
-```
-
----
+![img.png](img.png)
 
 ## 🧩 2. Danh Sách Dịch Vụ & Chức Năng (Microservices Breakdown)
 
@@ -89,38 +26,33 @@ flowchart TD
   - **Rate Limiting & Circuit Breaker**: Giới hạn tần suất gọi API với Redis RateLimiter và bảo vệ hệ thống khỏi nổ dây chuyền với Resilience4j.
 
 ### 3. 🔐 Auth Service (`AuthService` - Port `8081`)
-- **Công nghệ**: Spring Boot, Spring Security, BCrypt, JJWT, OpenFeign, Flyway.
-- **Database**: PostgreSQL (`auth_db`).
+- **Công nghệ**: Spring Boot 4.1, Spring Security, BCrypt, JJWT (io.jsonwebtoken), Flyway Migration.
 - **Vai trò**: Quản lý định danh và xác thực tài khoản.
   - Đăng ký tài khoản (`sign-up`), Đăng nhập (`login`), Làm mới Access Token (`refresh-token`).
-  - **OpenFeign Integration**: Tự động gọi `UserService` để khởi tạo/xóa hồ sơ người dùng tương ứng trong `user_db`.
+  - Mã hóa mật khẩu chuẩn BCrypt (`PasswordEncoder`).
   - Cấp phát cặp JWT Token (Access Token sống 15 phút, Refresh Token sống 7 ngày).
   - Quản lý phiên đăng xuất (`logout`): Đưa Access Token đang dùng vào **Redis Blacklist** với thời gian TTL bằng thời hạn còn lại của Token.
 
 ### 4. 👤 User Service (`UserService` - Port `8082`)
-- **Công nghệ**: Spring Boot, Spring Data JPA, OpenFeign, gRPC Server, PostgreSQL, Flyway.
-- **Database**: PostgreSQL (`user_db`).
+- **Công nghệ**: Spring Boot 4.1, Spring Data JPA, OpenFeign, PostgreSQL, Flyway.
 - **Vai trò**: Quản lý thông tin hồ sơ độc giả và thủ thư.
-  - Cung cấp REST API quản lý danh sách người dùng, cập nhật thông tin cá nhân (`fullName`, `phone`).
-  - **gRPC Server (`UserServiceGrpc`)**: Cung cấp RPC endpoint `getUser(UserId)` cho `NotificationService` truy vấn siêu tốc thông tin người dùng (`email`, `fullName`).
-  - **OpenFeign Client**: Gọi tới `BookBorrowService` để kiểm tra danh sách mượn trả active khi cần.
+  - Cung cấp API quản lý danh sách người dùng, cập nhật thông tin cá nhân (`fullName`, `phone`).
+  - Cung cấp Feign Client endpoint cho `NotificationService` và `BookBorrowService` truy vấn thông tin độc giả theo `userId`.
 
 ### 5. 📚 Book & Borrow Service (`BookBorrowService` - Port `8083`)
-- **Công nghệ**: Spring Boot, Spring Data JPA, Apache Kafka Producer, Transactional Outbox Pattern, Scheduled Tasks.
-- **Database**: PostgreSQL (`book_db`).
+- **Công nghệ**: Spring Boot 4.1, Spring Data JPA, Apache Kafka Producer, Transactional Outbox Pattern, Scheduled Tasks.
 - **Vai trò**: Trái tim nghiệp vụ quản lý thư viện.
   - **Quản lý Kho Sách & Bản Sao**: Thêm/sửa/xóa đầu sách (`books`), quản lý mã tài sản bản sao (`book_copies` với mã tài sản duy nhất `asset_code`), quản lý danh mục (`categories`) và nhập kho (`book_imports`).
   - **Quy trình Mượn - Trả Sách**: Tạo phiếu mượn (`borrow_records`), kiểm tra số lượng bản sao khả dụng, xử lý trả sách và tự động tính tiền phạt/ngày quá hạn.
   - **Auto Job Quá Hạn & Sắp Hạn**: Job lập lịch chạy tự động kiểm tra phiếu mượn quá hạn (`OVERDUE`), sắp tới hạn trả (`DUE_SOON`) để phát sinh sự kiện thông báo.
-  - **Transactional Outbox Pattern**: Lưu sự kiện vào bảng `outbox_events` trong cùng local transaction với dữ liệu mượn sách, sau đó Publisher Scheduler sẽ phát event lên Kafka topic `notification-events` đảm bảo tính nhất quán dữ liệu ACID.
+  - **Transactional Outbox Pattern**: Đảm bảo tính nhất quán dữ liệu ACID tuyệt đối giữa Database và Kafka Event Streaming.
 
 ### 6. 🔔 Notification Service (`NotificationService` - Port `8084`)
-- **Công nghệ**: Spring Boot, Kafka Consumer, gRPC Client, JavaMailSender (SMTP), PostgreSQL.
-- **Database**: PostgreSQL (`notification_db`).
+- **Công nghệ**: Spring Boot 4.1, Kafka Consumer, OpenFeign, JavaMailSender (SMTP), PostgreSQL.
 - **Vai trò**: Xử lý thông báo bất đồng bộ.
-  - **Kafka Listener**: Lắng nghe topic `notification-events` từ Kafka Cluster với Consumer Group `notification-group`.
-  - **gRPC Integration**: Gọi `UserServiceGrpc` để lấy thông tin email và tên người nhận trực tiếp từ `UserService`.
-  - **Dual Notification**: Lưu hộp thư thông báo In-App vào PostgreSQL (`notification_db`) đồng thời gửi email thông báo trực tiếp qua SMTP Email server.
+  - **Kafka Listener**: Lắng nghe topic `library.notification.events` từ Kafka Cluster với Consumer Group `notification-group`.
+  - **OpenFeign Integration**: Gọi tới `UserService` để lấy thông tin email và tên người nhận.
+  - **Dual Notification**: Lưu hộp thư thông báo In-App vào PostgreSQL (`notification_db`) đồng thời gửi email thông báo trực tiếp qua SMTP Gmail server.
 
 ### 7. 📱 Frontend App (`lib-frontend` - Port `3000`)
 - **Công nghệ**: React 18, TypeScript, Vite, Custom Glassmorphism Vanilla CSS Design Tokens, FontAwesome 6, Nginx Server.
@@ -136,7 +68,7 @@ Hệ thống tuân thủ nghiêm ngặt nguyên tắc **Database-per-Service** �
 ### 💾 Phân Bổ Database (PostgreSQL 16)
 - **`auth_db`**: Chứa các bảng `users` (định danh & mật khẩu), `roles`, `user_roles`.
 - **`user_db`**: Chứa bảng `user_profiles` (thông tin chi tiết độc giả/thủ thư).
-- **`book_db`**: Chứa các bảng `categories`, `books`, `book_copies`, `book_imports`, `book_import_items`, `borrow_records`, và `outbox_events`.
+- **`book_borrow_db`**: Chứa các bảng `categories`, `books`, `book_copies`, `book_imports`, `book_import_items`, `borrow_records`, và `outbox_events`.
 - **`notification_db`**: Chứa bảng `notifications`.
 
 ---
@@ -148,13 +80,12 @@ Hệ thống tuân thủ nghiêm ngặt nguyên tắc **Database-per-Service** �
 ```mermaid
 sequenceDiagram
     autonumber
-    actor Librarian as Thủ thư / Scheduled Job
+    actor Librarian as Thủ thư / Job
     participant BorrowSvc as BookBorrowService
-    participant BookDB as PostgreSQL (book_db)
+    participant BookDB as PostgreSQL (book_borrow_db)
     participant OutboxJob as OutboxPublisherScheduler
-    participant Kafka as Kafka Broker (Topic: notification-events)
+    participant Kafka as Kafka Broker (Topic: library.notification.events)
     participant NotifSvc as NotificationService
-    participant UserSvc as UserService (gRPC)
     participant SMTP as Gmail SMTP
 
     Librarian->>BorrowSvc: Lập phiếu mượn / Kiểm tra quá hạn
@@ -165,20 +96,18 @@ sequenceDiagram
         BorrowSvc->>BookDB: 3. COMMIT TRANSACTION
     end
 
-    loop Chạy định kỳ (Outbox Scheduled Job)
+    loop Chạy mỗi 5 giây (Scheduled Job)
         OutboxJob->>BookDB: SELECT * FROM outbox_events WHERE status = 'PENDING'
-        OutboxJob->>Kafka: Publish Event Payload (NotificationEventPayload)
+        OutboxJob->>Kafka: Publish Event Payload (NotificationEvent)
         alt Gửi Kafka thành công
             OutboxJob->>BookDB: UPDATE outbox_events SET status = 'PROCESSED'
         else Gửi thất bại
-            OutboxJob->>BookDB: INCREMENT retry_count (UPDATE status = 'FAILED' nếu quá ngưỡng)
+            OutboxJob->>BookDB: INCREMENT retry_count (UPDATE status = 'FAILED' nếu quá số lần thử)
         end
     end
 
-    Kafka->>NotifSvc: Consumer nhận event (notification-group)
-    NotifSvc->>UserSvc: gRPC call: getUser(userId)
-    UserSvc-->>NotifSvc: Trả về {email, fullName}
-    NotifSvc->>NotifSvc: Lưu In-App Notification vào notification_db
+    Kafka->>NotifSvc: Consumer nhận NotificationEventPayload
+    NotifSvc->>NotifSvc: Xử lý lưu In-App Notification
     NotifSvc->>SMTP: Gửi Email cho Độc giả
 ```
 
@@ -226,9 +155,9 @@ sequenceDiagram
 Hệ thống được thiết kế để khởi chạy hoàn chỉnh chỉ với 1 câu lệnh duy nhất thông qua **Docker Compose**.
 
 ### 🛠️ Công Nghệ Hạ Tầng:
-- **PostgreSQL 16**: 4 database độc lập (`auth_db`, `user_db`, `book_db`, `notification_db`) tự động khởi tạo qua script `postgres/init.sql`.
+- **PostgreSQL 16**: 4 database độc lập tự động khởi tạo qua script `postgres/init.sql`.
 - **Redis 7 Alpine**: Lưu trữ Token Blacklist và bộ đệm Rate Limiter.
-- **Apache Kafka Cluster**: Cụm 3 Broker Kafka (`broker-1`, `broker-2`, `broker-3`) quản lý bởi Zookeeper.
+- **Apache Kafka Cluster**: Cụm 3 Broker Kafka (`broker-1`, `broker-2`, `broker-3`) quản lý bởi Zookeeper, đảm bảo tính sẵn sàng cao (High Availability).
 - **Flyway Database Migration**: Quản lý phiên bản và tự động tạo bảng DB cho từng service.
 
 ### 🌐 Bảng Phân Bổ Cổng (Port Mapping):
