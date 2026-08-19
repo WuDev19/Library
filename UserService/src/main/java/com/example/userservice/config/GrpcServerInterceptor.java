@@ -28,9 +28,9 @@ public class GrpcServerInterceptor implements ServerInterceptor {
             ServerCall<ReqT, RespT> call,
             Metadata headers,
             ServerCallHandler<ReqT, RespT> next) {
-        String token = Objects.requireNonNull(headers.get(Metadata.Key.of("Authorization", Metadata.ASCII_STRING_MARSHALLER)))
-                .substring(7);
         try {
+            String token = Objects.requireNonNull(headers.get(Metadata.Key.of("Authorization", Metadata.ASCII_STRING_MARSHALLER)))
+                    .substring(7);
             Claims claims = validateToken(token);
             Context context = Context.current().withValue(CLAIMS_CONTEXT_KEY, claims);
             return Contexts.interceptCall(context, call, headers, next);
@@ -42,6 +42,10 @@ public class GrpcServerInterceptor implements ServerInterceptor {
                 default -> Status.INTERNAL.withDescription(error.getMessage());
             };
             call.close(status, headers);
+            return new ServerCall.Listener<>() {
+            };
+        } catch (Exception e) {
+            call.close(Status.INTERNAL.withDescription("Lỗi hệ thống"), headers);
             return new ServerCall.Listener<>() {
             };
         }

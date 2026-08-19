@@ -25,7 +25,6 @@ import java.time.OffsetDateTime;
 public class NotificationKafkaListener {
 
     private final NotificationRepository notificationRepository;
-    private final UserService userService;
     private final IEmailService emailService;
     private final ObjectMapper objectMapper;
     private final UserServiceGrpc.UserServiceBlockingStub stub;

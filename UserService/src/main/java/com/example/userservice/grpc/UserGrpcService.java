@@ -23,6 +23,9 @@ public class UserGrpcService extends UserServiceGrpc.UserServiceImplBase {
     public void getUser(GetUserRequest request, StreamObserver<UserResponse> responseObserver) {
         Claims claims = GrpcServerInterceptor.CLAIMS_CONTEXT_KEY.get();
         String roles = claims.get("roles").toString();
+        if (!roles.equals("SYSTEM")) {
+            throw new BusinessException(ErrorResponse.ACCESS_DENIED);
+        }
         Long userId = request.getUserId();
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new BusinessException(ErrorResponse.RESOURCE_NOT_FOUND));
