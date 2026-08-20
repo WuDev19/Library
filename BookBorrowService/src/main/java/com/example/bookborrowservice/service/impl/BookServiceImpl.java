@@ -1,5 +1,6 @@
 package com.example.bookborrowservice.service.impl;
 
+import com.example.bookborrowservice.dto.common.PageResponse;
 import com.example.bookborrowservice.dto.request.BookImportRequest;
 import com.example.bookborrowservice.dto.request.BookRequest;
 import com.example.bookborrowservice.dto.response.BookResponse;
@@ -11,6 +12,8 @@ import com.example.bookborrowservice.mapper.BookMapper;
 import com.example.bookborrowservice.repository.*;
 import com.example.bookborrowservice.service.base.IBookService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -102,30 +105,42 @@ public class BookServiceImpl implements IBookService {
     }
 
     @Override
-    public List<BookResponse> getAllBooks() {
-        return bookRepository.findAllWithCategory().stream()
-                .map(bookMapper::mapToResponse)
-                .toList();
+    public PageResponse<BookResponse> getAllBooks(Pageable pageable) {
+        Page<Book> page = bookRepository.findAllWithCategory(pageable);
+        return new PageResponse<>(
+                page.getNumber(),
+                page.getNumberOfElements(),
+                page.getContent().stream().map(bookMapper::mapToResponse).toList());
     }
 
     @Override
-    public List<BookResponse> searchBooks(String title, String code) {
+    public PageResponse<BookResponse> searchBooks(String title, String code, Pageable pageable) {
         String searchTitle = (title != null && !title.trim().isEmpty()) ? title.trim() : null;
         String searchCode = (code != null && !code.trim().isEmpty()) ? code.trim() : null;
 
-        return bookRepository.searchBooks(searchTitle, searchCode).stream()
-                .map(bookMapper::mapToResponse)
-                .toList();
+        Page<Book> page = bookRepository.searchBooks(searchTitle, searchCode, pageable);
+        return new PageResponse<>(
+                page.getNumber(),
+                page.getNumberOfElements(),
+                page.getContent().stream()
+                        .map(bookMapper::mapToResponse)
+                        .toList()
+        );
     }
 
     @Override
-    public List<BookResponse> getBooksByCategoryCode(String categoryCode) {
+    public PageResponse<BookResponse> getBooksByCategoryCode(String categoryCode, Pageable pageable) {
         if (categoryCode == null || categoryCode.trim().isEmpty()) {
-            return List.of();
+            return new PageResponse<>(0, 0, List.of());
         }
-        return bookRepository.findByCategoryCodeWithCategory(categoryCode.trim()).stream()
-                .map(bookMapper::mapToResponse)
-                .toList();
+        Page<Book> page = bookRepository.findByCategoryCodeWithCategory(categoryCode.trim(), pageable);
+        return new PageResponse<>(
+                page.getNumber(),
+                page.getNumberOfElements(),
+                page.getContent().stream()
+                        .map(bookMapper::mapToResponse)
+                        .toList()
+        );
     }
 
     @Override

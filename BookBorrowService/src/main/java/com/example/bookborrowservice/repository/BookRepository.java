@@ -2,6 +2,8 @@ package com.example.bookborrowservice.repository;
 
 import com.example.bookborrowservice.entity.Book;
 import jakarta.persistence.LockModeType;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
@@ -22,16 +24,16 @@ public interface BookRepository extends JpaRepository<Book, Long> {
     Optional<Book> findByIdWithCategoryForUpdate(@Param("id") Long id);
 
     @Query("SELECT b FROM Book b LEFT JOIN FETCH b.category ORDER BY b.createdAt DESC")
-    List<Book> findAllWithCategory();
+    Page<Book> findAllWithCategory(Pageable pageable);
 
     @Query("SELECT DISTINCT b FROM Book b " +
            "LEFT JOIN FETCH b.category " +
            "WHERE (:title IS NULL OR LOWER(b.title) LIKE LOWER(CONCAT('%', :title, '%'))) " +
            "AND (:code IS NULL OR LOWER(b.code) LIKE LOWER(CONCAT('%', :code, '%')))")
-    List<Book> searchBooks(@Param("title") String title, @Param("code") String code);
+    Page<Book> searchBooks(@Param("title") String title, @Param("code") String code, Pageable pageable);
 
     @Query("SELECT DISTINCT b FROM Book b " +
            "LEFT JOIN FETCH b.category c " +
            "WHERE LOWER(c.code) = LOWER(:categoryCode)")
-    List<Book> findByCategoryCodeWithCategory(@Param("categoryCode") String categoryCode);
+    Page<Book> findByCategoryCodeWithCategory(@Param("categoryCode") String categoryCode, Pageable pageable);
 }

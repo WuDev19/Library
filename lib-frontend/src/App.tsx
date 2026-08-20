@@ -38,8 +38,14 @@ const MainApp: React.FC = () => {
 
   // --- Real Data State from Database (Initial Empty Arrays) ---
   const [books, setBooks] = useState<Book[]>([]);
+  const [bookPage, setBookPage] = useState<number>(0);
+  const [pageSize] = useState<number>(10);
+  const [sizeOfPage, setSizeOfPage] = useState<number>(0);
   const [categories, setCategories] = useState<Category[]>([]);
   const [borrows, setBorrows] = useState<BorrowRecord[]>([]);
+  const [borrowPage, setBorrowPage] = useState<number>(0);
+  const [borrowPageSize] = useState<number>(10);
+  const [borrowSizeOfPage, setBorrowSizeOfPage] = useState<number>(0);
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
@@ -84,23 +90,29 @@ const MainApp: React.FC = () => {
     setLoading(true);
     try {
       const [fetchedBooks, fetchedCats, fetchedBorrows, fetchedNotifs, fetchedUsers] = await Promise.allSettled([
-        bookApi.getAll(),
+        bookApi.getAll(bookPage, pageSize),
         categoryApi.getAll(),
-        user?.role === 'LIBRARIAN' ? borrowApi.getAll() : borrowApi.getMyHistory(),
+        user?.role === 'LIBRARIAN' ? borrowApi.getAll(borrowPage, borrowPageSize) : borrowApi.getMyHistory(borrowPage, borrowPageSize),
         notificationApi.getMyNotifications(),
         user?.role === 'LIBRARIAN' ? userApi.getAllUsers() : Promise.resolve([]),
       ]);
 
-      if (fetchedBooks.status === 'fulfilled' && Array.isArray(fetchedBooks.value)) {
-        setBooks(fetchedBooks.value);
+      if (fetchedBooks.status === 'fulfilled' && fetchedBooks.value) {
+        const pageData = fetchedBooks.value;
+        setBooks(pageData.content || []);
+        setBookPage(pageData.page ?? 0);
+        setSizeOfPage(pageData.sizeOfPage ?? (pageData.content?.length || 0));
       }
       if (fetchedCats.status === 'fulfilled' && Array.isArray(fetchedCats.value)) {
         setCategories(fetchedCats.value);
       }
       let currentBorrows: BorrowRecord[] = [];
-      if (fetchedBorrows.status === 'fulfilled' && Array.isArray(fetchedBorrows.value)) {
-        currentBorrows = fetchedBorrows.value;
+      if (fetchedBorrows.status === 'fulfilled' && fetchedBorrows.value) {
+        const pageData = fetchedBorrows.value;
+        currentBorrows = pageData.content || [];
         setBorrows(currentBorrows);
+        setBorrowPage(pageData.page ?? 0);
+        setBorrowSizeOfPage(pageData.sizeOfPage ?? (currentBorrows.length));
       }
 
       let notifsList: NotificationItem[] = [];
@@ -138,7 +150,39 @@ const MainApp: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [token, user?.role]);
+  }, [token, user?.role, bookPage, pageSize, borrowPage, borrowPageSize]);
+
+  const handleBorrowPageChange = async (newPage: number) => {
+    if (newPage < 0) return;
+    setLoading(true);
+    try {
+      const res = user?.role === 'LIBRARIAN'
+        ? await borrowApi.getAll(newPage, borrowPageSize)
+        : await borrowApi.getMyHistory(newPage, borrowPageSize);
+      setBorrows(res.content || []);
+      setBorrowPage(res.page);
+      setBorrowSizeOfPage(res.sizeOfPage);
+    } catch (err) {
+      console.warn('Error fetching paginated borrows:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleBookPageChange = async (newPage: number) => {
+    if (newPage < 0) return;
+    setLoading(true);
+    try {
+      const res = await bookApi.getAll(newPage, pageSize);
+      setBooks(res.content || []);
+      setBookPage(res.page);
+      setSizeOfPage(res.sizeOfPage);
+    } catch (err) {
+      console.warn('Error fetching paginated books:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     fetchRealDatabaseData();
@@ -402,6 +446,10 @@ const MainApp: React.FC = () => {
                 <BookManagement
                   books={books}
                   categories={categories}
+                  page={bookPage}
+                  pageSize={pageSize}
+                  sizeOfPage={sizeOfPage}
+                  onPageChange={handleBookPageChange}
                   onOpenAddBook={() => {
                     setEditingBook(null);
                     setIsBookModalOpen(true);
@@ -436,6 +484,10 @@ const MainApp: React.FC = () => {
               {activeTab === 'borrows' && (
                 <BorrowManagement
                   borrows={borrows}
+                  page={borrowPage}
+                  pageSize={borrowPageSize}
+                  sizeOfPage={borrowSizeOfPage}
+                  onPageChange={handleBorrowPageChange}
                   onOpenCreateBorrow={() => setIsCreateBorrowOpen(true)}
                   onOpenReturnBook={(code) => {
                     setSelectedBorrowCode(code || '');
@@ -475,11 +527,23 @@ const MainApp: React.FC = () => {
                 <BookCatalog
                   books={books}
                   categories={categories}
+                  page={bookPage}
+                  pageSize={pageSize}
+                  sizeOfPage={sizeOfPage}
+                  onPageChange={handleBookPageChange}
                   onQuickBorrow={handleOpenBorrowModal}
                 />
               )}
 
-              {activeTab === 'history' && <BorrowHistory borrows={borrows} />}
+              {activeTab === 'history' && (
+                <BorrowHistory
+                  borrows={borrows}
+                  page={borrowPage}
+                  pageSize={borrowPageSize}
+                  sizeOfPage={borrowSizeOfPage}
+                  onPageChange={handleBorrowPageChange}
+                />
+              )}
 
               {activeTab === 'notifications' && (
                 <NotificationsInbox

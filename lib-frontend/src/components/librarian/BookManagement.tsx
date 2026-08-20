@@ -4,6 +4,10 @@ import type { Book, Category } from '../../types';
 interface BookManagementProps {
   books: Book[];
   categories: Category[];
+  page?: number;
+  pageSize?: number;
+  sizeOfPage?: number;
+  onPageChange?: (newPage: number) => void;
   onOpenAddBook: () => void;
   onOpenEditBook: (book: Book) => void;
   onDeleteBook: (id: number) => void;
@@ -13,6 +17,10 @@ interface BookManagementProps {
 export const BookManagement: React.FC<BookManagementProps> = ({
   books,
   categories,
+  page = 0,
+  pageSize = 10,
+  sizeOfPage = 0,
+  onPageChange,
   onOpenAddBook,
   onOpenEditBook,
   onDeleteBook,
@@ -73,58 +81,93 @@ export const BookManagement: React.FC<BookManagementProps> = ({
           </p>
         </div>
       ) : (
-        <div className="books-grid">
-          {filteredBooks.map((book) => (
-            <div key={book.id} className="book-card">
-              <div className="book-cover-placeholder">
-                <i className="fa-solid fa-book"></i>
-              </div>
-              <div className="book-card-body">
-                <div>
-                  <div className="badge badge-jade" style={{ marginBottom: '8px' }}>
-                    {book.categoryName || 'Chưa phân loại'}
+        <>
+          <div className="books-grid">
+            {filteredBooks.map((book) => (
+              <div key={book.id} className="book-card">
+                <div className="book-cover-placeholder">
+                  <i className="fa-solid fa-book"></i>
+                </div>
+                <div className="book-card-body">
+                  <div>
+                    <div className="badge badge-jade" style={{ marginBottom: '8px' }}>
+                      {book.categoryName || 'Chưa phân loại'}
+                    </div>
+                    <div className="book-title">{book.title}</div>
+                    <div className="book-author">Tác giả: {book.author}</div>
+                    <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                      ISBN: {book.isbn || 'N/A'}
+                    </div>
+                    <div
+                      style={{
+                        fontSize: '0.88rem',
+                        fontWeight: 600,
+                        marginTop: '8px',
+                        color: 'var(--primary-hover)',
+                      }}
+                    >
+                      Khả dụng: {book.availableCopies ?? 0} / {book.totalCopies ?? 0} bản
+                    </div>
                   </div>
-                  <div className="book-title">{book.title}</div>
-                  <div className="book-author">Tác giả: {book.author}</div>
-                  <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-                    ISBN: {book.isbn || 'N/A'}
-                  </div>
-                  <div
-                    style={{
-                      fontSize: '0.88rem',
-                      fontWeight: 600,
-                      marginTop: '8px',
-                      color: 'var(--primary-hover)',
-                    }}
-                  >
-                    Khả dụng: {book.availableCopies ?? 0} / {book.totalCopies ?? 0} bản
+                  <div style={{ display: 'flex', gap: '8px', marginTop: '16px' }}>
+                    <button
+                      className="btn btn-sm btn-outline-jade"
+                      style={{ flex: 1 }}
+                      onClick={() => onOpenAddCopy(book)}
+                    >
+                      <i className="fa-solid fa-copy"></i> + Bản sao
+                    </button>
+                    <button
+                      className="btn btn-sm btn-secondary"
+                      onClick={() => onOpenEditBook(book)}
+                    >
+                      <i className="fa-solid fa-pen"></i>
+                    </button>
+                    <button
+                      className="btn btn-sm btn-danger"
+                      onClick={() => onDeleteBook(book.id)}
+                    >
+                      <i className="fa-solid fa-trash"></i>
+                    </button>
                   </div>
                 </div>
-                <div style={{ display: 'flex', gap: '8px', marginTop: '16px' }}>
-                  <button
-                    className="btn btn-sm btn-outline-jade"
-                    style={{ flex: 1 }}
-                    onClick={() => onOpenAddCopy(book)}
-                  >
-                    <i className="fa-solid fa-copy"></i> + Bản sao
-                  </button>
-                  <button
-                    className="btn btn-sm btn-secondary"
-                    onClick={() => onOpenEditBook(book)}
-                  >
-                    <i className="fa-solid fa-pen"></i>
-                  </button>
-                  <button
-                    className="btn btn-sm btn-danger"
-                    onClick={() => onDeleteBook(book.id)}
-                  >
-                    <i className="fa-solid fa-trash"></i>
-                  </button>
-                </div>
               </div>
+            ))}
+          </div>
+
+          {/* Pagination Controls */}
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginTop: '24px',
+              paddingTop: '16px',
+              borderTop: '1px solid rgba(255, 255, 255, 0.1)',
+            }}
+          >
+            <span className="text-muted" style={{ fontSize: '0.9rem' }}>
+              Số lượng trong trang: <strong>{sizeOfPage || books.length}</strong> (Trang {page + 1})
+            </span>
+            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+              <button
+                className="btn btn-sm btn-secondary"
+                disabled={page <= 0}
+                onClick={() => onPageChange && onPageChange(page - 1)}
+              >
+                <i className="fa-solid fa-chevron-left"></i> Trang trước
+              </button>
+              <span style={{ fontWeight: 600, padding: '0 8px' }}>Trang {page + 1}</span>
+              <button
+                className="btn btn-sm btn-secondary"
+                disabled={books.length < pageSize}
+                onClick={() => onPageChange && onPageChange(page + 1)}
+              >
+                Trang sau <i className="fa-solid fa-chevron-right"></i>
+              </button>
             </div>
-          ))}
-        </div>
+          </div>
+        </>
       )}
     </div>
   );

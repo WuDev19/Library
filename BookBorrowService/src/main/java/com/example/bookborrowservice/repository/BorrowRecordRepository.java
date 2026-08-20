@@ -2,6 +2,8 @@ package com.example.bookborrowservice.repository;
 
 import com.example.bookborrowservice.entity.BorrowRecord;
 import com.example.bookborrowservice.entity.enums.BorrowStatus;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -19,10 +21,10 @@ public interface BorrowRecordRepository extends JpaRepository<BorrowRecord, Long
     Optional<BorrowRecord> findByIdWithDetails(@Param("id") Long id);
 
     @Query("SELECT r FROM BorrowRecord r JOIN FETCH r.bookCopy bc JOIN FETCH bc.book b WHERE r.borrowerId = :userId ORDER BY r.createdAt DESC")
-    List<BorrowRecord> findByBorrowerUserIdWithDetails(@Param("userId") Long userId);
+    Page<BorrowRecord> findByBorrowerUserIdWithDetails(@Param("userId") Long userId, Pageable pageable);
 
     @Query("SELECT r FROM BorrowRecord r JOIN FETCH r.bookCopy bc JOIN FETCH bc.book b ORDER BY r.createdAt DESC")
-    List<BorrowRecord> findAllWithDetails();
+    Page<BorrowRecord> findAllWithDetails(Pageable pageable);
 
     @Query("SELECT r FROM BorrowRecord r JOIN FETCH r.bookCopy bc JOIN FETCH bc.book b WHERE r.borrowerId IN :userIds AND r.status IN (:statuses)")
     List<BorrowRecord> findActiveBorrowsByUserIdsWithDetails(@Param("userIds") List<Long> userIds, @Param("statuses") List<BorrowStatus> statuses);

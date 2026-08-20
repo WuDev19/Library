@@ -5,6 +5,7 @@ import com.example.bookborrowservice.constants.StringCommon;
 import com.example.bookborrowservice.dto.common.ApiResponse;
 import com.example.bookborrowservice.dto.common.ApiResult;
 import com.example.bookborrowservice.dto.common.CRUDResponseHelper;
+import com.example.bookborrowservice.dto.common.PageResponse;
 import com.example.bookborrowservice.dto.request.BorrowRequest;
 import com.example.bookborrowservice.dto.request.ReturnRequest;
 import com.example.bookborrowservice.dto.response.BorrowRecordResponse;
@@ -16,6 +17,8 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -55,7 +58,7 @@ public class BorrowController {
     }
 
     @Operation(
-            summary = "Api cho librarien trả sách",
+            summary = "Api cho librarian trả sách",
             description = "Borrower sẽ ko có quyền trả sách online mà sẽ phải đem đến quầy để trả và librarian sẽ xác nhận"
     )
     @PostMapping("/return")
@@ -76,14 +79,16 @@ public class BorrowController {
     @Operation(summary = "Api cho user lấy danh sách các sách được mượn")
     @GetMapping
     @PreAuthorize("hasAnyRole('LIBRARIAN', 'BORROWER')")
-    public ResponseEntity<ApiResult<List<BorrowRecordResponse>>> getBorrowRecords(@AuthenticationPrincipal Jwt jwt) {
+    public ResponseEntity<ApiResult<PageResponse<BorrowRecordResponse>>> getBorrowRecords(
+            @AuthenticationPrincipal Jwt jwt,
+            @PageableDefault Pageable pageable) {
         Long authenticatedUserId = jwt.getClaim("userId");
         String roleStr = jwt.getClaimAsString("roles");
         boolean isLibrarian = "LIBRARIAN".equalsIgnoreCase(roleStr);
 
-        List<BorrowRecordResponse> records = isLibrarian
-                ? borrowService.getAllBorrowRecords()
-                : borrowService.getBorrowRecordsByUser(authenticatedUserId);
+        PageResponse<BorrowRecordResponse> records = isLibrarian
+                ? borrowService.getAllBorrowRecords(pageable)
+                : borrowService.getBorrowRecordsByUser(authenticatedUserId, pageable);
 
         return ApiResponse.success(
                 records,

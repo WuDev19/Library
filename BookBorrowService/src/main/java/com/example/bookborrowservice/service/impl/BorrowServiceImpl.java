@@ -1,5 +1,6 @@
 package com.example.bookborrowservice.service.impl;
 
+import com.example.bookborrowservice.dto.common.PageResponse;
 import com.example.bookborrowservice.dto.event.NotificationEventPayload;
 import com.example.bookborrowservice.dto.request.BorrowRequest;
 import com.example.bookborrowservice.dto.request.ReturnRequest;
@@ -25,6 +26,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -125,17 +128,27 @@ public class BorrowServiceImpl implements IBorrowService {
     }
 
     @Override
-    public List<BorrowRecordResponse> getBorrowRecordsByUser(Long userId) {
-        return borrowRecordRepository.findByBorrowerUserIdWithDetails(userId).stream()
-                .map(borrowMapper::mapToResponse)
-                .toList();
+    public PageResponse<BorrowRecordResponse> getBorrowRecordsByUser(Long userId, Pageable pageable) {
+        Page<BorrowRecord> page = borrowRecordRepository.findByBorrowerUserIdWithDetails(userId, pageable);
+        return new PageResponse<>(
+                page.getNumber(),
+                page.getNumberOfElements(),
+                page.getContent().stream()
+                        .map(borrowMapper::mapToResponse)
+                        .toList()
+        );
     }
 
     @Override
-    public List<BorrowRecordResponse> getAllBorrowRecords() {
-        return borrowRecordRepository.findAllWithDetails().stream()
-                .map(borrowMapper::mapToResponse)
-                .toList();
+    public PageResponse<BorrowRecordResponse> getAllBorrowRecords(Pageable pageable) {
+        Page<BorrowRecord> page = borrowRecordRepository.findAllWithDetails(pageable);
+        return new PageResponse<>(
+                page.getNumber(),
+                page.getNumberOfElements(),
+                page.getContent().stream()
+                        .map(borrowMapper::mapToResponse)
+                        .toList()
+        );
     }
 
     @Override
@@ -191,7 +204,7 @@ public class BorrowServiceImpl implements IBorrowService {
 
     private void saveOutboxNotificationEvent(BorrowRecord record, NotificationType type, long daysOverdue, long fine) {
         String aggregateId = String.valueOf(record.getBorrowRecordId());
-        
+
         if (outboxEventRepository.existsByAggregateIdAndEventType(aggregateId, type.name())) {
             return;
         }

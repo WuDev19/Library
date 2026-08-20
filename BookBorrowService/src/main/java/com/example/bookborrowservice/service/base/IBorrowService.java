@@ -1,9 +1,11 @@
 package com.example.bookborrowservice.service.base;
 
+import com.example.bookborrowservice.dto.common.PageResponse;
 import com.example.bookborrowservice.dto.request.BorrowRequest;
 import com.example.bookborrowservice.dto.request.ReturnRequest;
 import com.example.bookborrowservice.dto.response.BorrowRecordResponse;
 import com.example.bookborrowservice.dto.response.BorrowedBookResponse;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 import java.util.Map;
@@ -13,9 +15,9 @@ public interface IBorrowService {
 
     void returnBook(ReturnRequest request, Long librarianId);
 
-    List<BorrowRecordResponse> getAllBorrowRecords();
+    PageResponse<BorrowRecordResponse> getAllBorrowRecords(Pageable pageable);
 
-    List<BorrowRecordResponse> getBorrowRecordsByUser(Long userId);
+    PageResponse<BorrowRecordResponse> getBorrowRecordsByUser(Long userId, Pageable pageable);
 
     BorrowRecordResponse getBorrowRecordById(Long id);
 

@@ -3,12 +3,20 @@ import type { BorrowRecord } from '../../types';
 
 interface BorrowManagementProps {
   borrows: BorrowRecord[];
+  page?: number;
+  pageSize?: number;
+  sizeOfPage?: number;
+  onPageChange?: (newPage: number) => void;
   onOpenCreateBorrow: () => void;
   onOpenReturnBook: (borrowCode?: string) => void;
 }
 
 export const BorrowManagement: React.FC<BorrowManagementProps> = ({
   borrows,
+  page = 0,
+  pageSize = 10,
+  sizeOfPage = 0,
+  onPageChange,
   onOpenCreateBorrow,
   onOpenReturnBook,
 }) => {
@@ -136,6 +144,39 @@ export const BorrowManagement: React.FC<BorrowManagementProps> = ({
               )}
             </tbody>
           </table>
+        </div>
+
+        {/* Pagination Controls */}
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginTop: '20px',
+            paddingTop: '16px',
+            borderTop: '1px solid rgba(255, 255, 255, 0.1)',
+          }}
+        >
+          <span className="text-muted" style={{ fontSize: '0.9rem' }}>
+            Số lượng trong trang: <strong>{sizeOfPage || borrows.length}</strong> (Trang {page + 1})
+          </span>
+          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+            <button
+              className="btn btn-sm btn-secondary"
+              disabled={page <= 0}
+              onClick={() => onPageChange && onPageChange(page - 1)}
+            >
+              <i className="fa-solid fa-chevron-left"></i> Trang trước
+            </button>
+            <span style={{ fontWeight: 600, padding: '0 8px' }}>Trang {page + 1}</span>
+            <button
+              className="btn btn-sm btn-secondary"
+              disabled={borrows.length < pageSize}
+              onClick={() => onPageChange && onPageChange(page + 1)}
+            >
+              Trang sau <i className="fa-solid fa-chevron-right"></i>
+            </button>
+          </div>
         </div>
       </div>
     </div>

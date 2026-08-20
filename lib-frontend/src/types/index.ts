@@ -108,3 +108,10 @@ export interface ApiResponse<T> {
   message?: string;
   data?: T;
 }
+
+export interface PageResponse<T> {
+  page: number;
+  sizeOfPage: number;
+  content: T[];
+}
+

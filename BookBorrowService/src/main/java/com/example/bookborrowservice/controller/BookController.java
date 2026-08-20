@@ -5,6 +5,7 @@ import com.example.bookborrowservice.constants.StringCommon;
 import com.example.bookborrowservice.dto.common.ApiResponse;
 import com.example.bookborrowservice.dto.common.ApiResult;
 import com.example.bookborrowservice.dto.common.CRUDResponseHelper;
+import com.example.bookborrowservice.dto.common.PageResponse;
 import com.example.bookborrowservice.dto.request.BookImportRequest;
 import com.example.bookborrowservice.dto.request.BookRequest;
 import com.example.bookborrowservice.dto.response.BookResponse;
@@ -13,13 +14,14 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.Map;
 
 @SecurityRequirement(name = StringCommon.SECURITY_SCHEME)
@@ -84,8 +86,8 @@ public class BookController {
     @Operation(summary = "Api cho user lấy tất cả đầu sách")
     @GetMapping
     @PreAuthorize("hasAnyRole('LIBRARIAN', 'BORROWER')")
-    public ResponseEntity<ApiResult<List<BookResponse>>> getAllBooks() {
-        List<BookResponse> books = bookService.getAllBooks();
+    public ResponseEntity<ApiResult<PageResponse<BookResponse>>> getAllBooks(@PageableDefault Pageable pageable) {
+        PageResponse<BookResponse> books = bookService.getAllBooks(pageable);
         return ApiResponse.success(
                 books,
                 "Lấy danh sách sách thành công",
@@ -96,11 +98,12 @@ public class BookController {
     @Operation(summary = "Api cho user tìm kiếm đầu sách")
     @GetMapping("/search")
     @PreAuthorize("hasAnyRole('LIBRARIAN', 'BORROWER')")
-    public ResponseEntity<ApiResult<List<BookResponse>>> searchBooks(
+    public ResponseEntity<ApiResult<PageResponse<BookResponse>>> searchBooks(
             @RequestParam(required = false) String title,
-            @RequestParam(required = false) String code
+            @RequestParam(required = false) String code,
+            @PageableDefault Pageable pageable
     ) {
-        List<BookResponse> books = bookService.searchBooks(title, code);
+        PageResponse<BookResponse> books = bookService.searchBooks(title, code, pageable);
         return ApiResponse.success(
                 books,
                 "Tìm kiếm sách thành công",
@@ -111,8 +114,9 @@ public class BookController {
     @Operation(summary = "Api cho user tìm kiếm đầu sách theo danh mục")
     @GetMapping("/by-category/{categoryCode}")
     @PreAuthorize("hasAnyRole('LIBRARIAN', 'BORROWER')")
-    public ResponseEntity<ApiResult<List<BookResponse>>> getBooksByCategoryCode(@PathVariable String categoryCode) {
-        List<BookResponse> books = bookService.getBooksByCategoryCode(categoryCode);
+    public ResponseEntity<ApiResult<PageResponse<BookResponse>>> getBooksByCategoryCode(@PathVariable String categoryCode,
+                                                                                        @PageableDefault Pageable pageable) {
+        PageResponse<BookResponse> books = bookService.getBooksByCategoryCode(categoryCode, pageable);
         return ApiResponse.success(
                 books,
                 "Lấy danh sách sách theo danh mục thành công",

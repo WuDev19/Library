@@ -1,4 +1,4 @@
-import type { Book, Category, BorrowRecord, NotificationItem, User, UserRole, AuthResponse } from '../types';
+import type { Book, Category, BorrowRecord, NotificationItem, User, UserRole, AuthResponse, PageResponse } from '../types';
 
 const DEFAULT_API_URL = 'http://localhost:8080/api/v1';
 
@@ -252,25 +252,47 @@ export const userApi = {
 };
 
 // --- BookBorrowService Endpoints (/api/v1/books, /api/v1/categories, /api/v1/borrows) ---
+const normalizePageResponse = (raw: unknown): PageResponse<Book> => {
+  if (Array.isArray(raw)) {
+    return {
+      page: 0,
+      sizeOfPage: raw.length,
+      content: raw.map(normalizeBook),
+    };
+  }
+  const obj = (raw || {}) as Record<string, unknown>;
+  const contentArray = Array.isArray(obj.content) ? obj.content : [];
+  return {
+    page: Number(obj.page || 0),
+    sizeOfPage: Number(obj.sizeOfPage ?? contentArray.length),
+    content: contentArray.map(normalizeBook),
+  };
+};
+
 export const bookApi = {
-  getAll: async (): Promise<Book[]> => {
-    const raw = await apiRequest<Record<string, unknown>[]>('/books');
-    return Array.isArray(raw) ? raw.map(normalizeBook) : [];
+  getAll: async (page = 0, size = 10): Promise<PageResponse<Book>> => {
+    const raw = await apiRequest<unknown>(`/books?page=${page}&size=${size}`);
+    return normalizePageResponse(raw);
   },
   getById: async (id: number): Promise<Book> => {
     const raw = await apiRequest<Record<string, unknown>>(`/books/${id}`);
     return normalizeBook(raw);
   },
-  search: async (title?: string, code?: string): Promise<Book[]> => {
+  search: async (title?: string, code?: string, page = 0, size = 10): Promise<PageResponse<Book>> => {
     const params = new URLSearchParams();
     if (title) params.append('title', title);
     if (code) params.append('code', code);
-    const raw = await apiRequest<Record<string, unknown>[]>(`/books/search?${params.toString()}`);
-    return Array.isArray(raw) ? raw.map(normalizeBook) : [];
+    params.append('page', String(page));
+    params.append('size', String(size));
+    const raw = await apiRequest<unknown>(`/books/search?${params.toString()}`);
+    return normalizePageResponse(raw);
   },
-  getByCategoryCode: async (categoryCode: string): Promise<Book[]> => {
-    const raw = await apiRequest<Record<string, unknown>[]>(`/books/by-category/${categoryCode}`);
-    return Array.isArray(raw) ? raw.map(normalizeBook) : [];
+  getByCategoryCode: async (categoryCode: string, page = 0, size = 10): Promise<PageResponse<Book>> => {
+    const params = new URLSearchParams();
+    params.append('page', String(page));
+    params.append('size', String(size));
+    const raw = await apiRequest<unknown>(`/books/by-category/${categoryCode}?${params.toString()}`);
+    return normalizePageResponse(raw);
   },
   create: (data: Partial<Book> & { code?: string }) =>
     apiRequest<Book>('/books', {
@@ -349,14 +371,31 @@ export const categoryApi = {
     }),
 };
 
+const normalizeBorrowPageResponse = (raw: unknown): PageResponse<BorrowRecord> => {
+  if (Array.isArray(raw)) {
+    return {
+      page: 0,
+      sizeOfPage: raw.length,
+      content: raw.map(normalizeBorrow),
+    };
+  }
+  const obj = (raw || {}) as Record<string, unknown>;
+  const contentArray = Array.isArray(obj.content) ? obj.content : [];
+  return {
+    page: Number(obj.page || 0),
+    sizeOfPage: Number(obj.sizeOfPage ?? contentArray.length),
+    content: contentArray.map(normalizeBorrow),
+  };
+};
+
 export const borrowApi = {
-  getAll: async (): Promise<BorrowRecord[]> => {
-    const raw = await apiRequest<Record<string, unknown>[]>('/borrows');
-    return Array.isArray(raw) ? raw.map(normalizeBorrow) : [];
+  getAll: async (page = 0, size = 10): Promise<PageResponse<BorrowRecord>> => {
+    const raw = await apiRequest<unknown>(`/borrows?page=${page}&size=${size}`);
+    return normalizeBorrowPageResponse(raw);
   },
-  getMyHistory: async (): Promise<BorrowRecord[]> => {
-    const raw = await apiRequest<Record<string, unknown>[]>('/borrows');
-    return Array.isArray(raw) ? raw.map(normalizeBorrow) : [];
+  getMyHistory: async (page = 0, size = 10): Promise<PageResponse<BorrowRecord>> => {
+    const raw = await apiRequest<unknown>(`/borrows?page=${page}&size=${size}`);
+    return normalizeBorrowPageResponse(raw);
   },
   getById: async (id: number): Promise<BorrowRecord> => {
     const raw = await apiRequest<Record<string, unknown>>(`/borrows/${id}`);
