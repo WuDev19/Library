@@ -16,9 +16,6 @@ public interface UserService {
 
     @PostMapping
     UserCreateResponse createUser(@RequestBody UserCreateRequest request);
-
-    @DeleteMapping("/{userId}")
-    void deleteUser(@PathVariable Long userId);
 }
 
 @Service
@@ -29,11 +26,6 @@ class UserServiceImpl implements UserService {
     public UserCreateResponse createUser(UserCreateRequest request) {
         log.error("Lỗi gọi API");
         return null;
-    }
-
-    @Override
-    public void deleteUser(Long userId) {
-        log.error("Lỗi delete");
     }
 
 }

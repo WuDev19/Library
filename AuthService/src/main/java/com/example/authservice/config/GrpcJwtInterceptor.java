@@ -1,4 +1,4 @@
-package com.example.notificationservice.config;
+package com.example.authservice.config;
 
 import io.grpc.*;
 import io.jsonwebtoken.Jwts;
@@ -11,14 +11,13 @@ import java.util.Date;
 import java.util.UUID;
 
 @Component
-//@GlobalClientInterceptor
 public class GrpcJwtInterceptor implements ClientInterceptor {
 
     @Value("${JWT_SECRET_KEY}")
     private String secretKey;
 
-    private static final Metadata.Key<String> AUTHORIZATION_KEY =
-            Metadata.Key.of("Authorization", Metadata.ASCII_STRING_MARSHALLER);
+    private static final Metadata.Key<String> AUTHORIZATION_KEY = Metadata.Key.of(
+            "Authorization", Metadata.ASCII_STRING_MARSHALLER);
 
     @Override
     public <ReqT, RespT> ClientCall<ReqT, RespT> interceptCall(
@@ -30,13 +29,12 @@ public class GrpcJwtInterceptor implements ClientInterceptor {
         return new ForwardingClientCall.SimpleForwardingClientCall<>(next.newCall(method, callOptions)) {
             @Override
             public void start(Listener<RespT> responseListener, Metadata headers) {
-                headers.put(AUTHORIZATION_KEY, "Bearer " + token);
+                headers.put(AUTHORIZATION_KEY, token);
                 super.start(responseListener, headers);
             }
         };
     }
 
-    //có thể lấy token hiện tại đang trong authentication hoặc servlet request attributes
     private String generateToken() {
         return Jwts.builder()
                 .id(UUID.randomUUID().toString())

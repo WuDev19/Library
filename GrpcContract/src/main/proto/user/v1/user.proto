@@ -3,8 +3,11 @@ syntax = "proto3";
 option java_multiple_files = true;
 option java_package = "com.example.grpc.user.v1";
 
+import "google/protobuf/empty.proto";
+
 service UserService {
   rpc getUser(GetUserRequest) returns (UserResponse);
+  rpc createUser(UserCreateRequest) returns (google.protobuf.Empty);
 }
 
 message GetUserRequest {
@@ -15,4 +18,11 @@ message UserResponse {
   int64 userId = 1;
   string email = 2;
   string fullName = 3;
+}
+
+message UserCreateRequest {
+  int64 userId = 1;
+  string email = 2;
+  string fullName = 3;
+  string phone = 4;
 }

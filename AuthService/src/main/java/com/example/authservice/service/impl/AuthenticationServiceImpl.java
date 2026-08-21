@@ -1,13 +1,10 @@
 package com.example.authservice.service.impl;
 
-import com.example.authservice.client.UserService;
 import com.example.authservice.dto.common.CRUDResponseHelper;
 import com.example.authservice.dto.request.auth.LoginByUsernameRequest;
 import com.example.authservice.dto.request.auth.LogoutRequest;
 import com.example.authservice.dto.request.auth.SignUpWithUsernameRequest;
-import com.example.authservice.dto.request.auth.UserCreateRequest;
 import com.example.authservice.dto.response.LoginResponse;
-import com.example.authservice.dto.response.UserCreateResponse;
 import com.example.authservice.entity.Account;
 import com.example.authservice.entity.RefreshToken;
 import com.example.authservice.entity.Role;
@@ -20,6 +17,10 @@ import com.example.authservice.service.base.IAuthenticationService;
 import com.example.authservice.service.base.IJwtService;
 import com.example.authservice.service.base.IRedisService;
 import com.example.authservice.utils.TimeUtils;
+import com.example.grpc.user.v1.UserCreateRequest;
+import com.example.grpc.user.v1.UserServiceGrpc;
+import com.google.protobuf.Empty;
+import io.grpc.StatusRuntimeException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -27,7 +28,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
 import java.time.OffsetDateTime;
-import java.time.temporal.ChronoUnit;
 import java.util.Map;
 import java.util.Set;
 
@@ -41,7 +41,7 @@ public class AuthenticationServiceImpl implements IAuthenticationService {
     private final RoleRepository roleRepository;
     private final IJwtService jwtService;
     private final IRedisService redisService;
-    private final UserService userService;
+    private final UserServiceGrpc.UserServiceBlockingStub stub;
     private static final String BLACK_KEY = "blacklist_token:jwt_id:";
 
     @Transactional
@@ -80,14 +80,14 @@ public class AuthenticationServiceImpl implements IAuthenticationService {
                 .roles(Set.of(role))
                 .build();
         accountRepository.save(account);
-        UserCreateResponse response = userService.createUser(new UserCreateRequest(
-                account.getUserId(),
-                request.email(),
-                request.fullName(),
-                request.phone()
-        ));
-        //nếu bị nhảy vào fallback thì xóa account đi để consistency
-        if (response == null) {
+        try {
+            Empty response = stub.createUser(UserCreateRequest.newBuilder()
+                    .setEmail(request.email())
+                    .setFullName(request.fullName())
+                    .setPhone(request.phone())
+                    .setUserId(account.getUserId())
+                    .build());
+        } catch (StatusRuntimeException e) {
             throw new BusinessException(ErrorResponse.USER_CREATE_ERROR);
         }
         return CRUDResponseHelper.createSuccess();
