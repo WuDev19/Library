@@ -1,6 +1,7 @@
 package com.example.userservice.service.impl;
 
 import com.example.userservice.client.BookBorrowService;
+import com.example.userservice.dto.common.PageResponse;
 import com.example.userservice.dto.request.UserCreateRequest;
 import com.example.userservice.dto.request.UserUpdateRequest;
 import com.example.userservice.dto.response.BorrowedBookResponse;
@@ -15,6 +16,8 @@ import com.example.userservice.repository.UserRepository;
 import com.example.userservice.service.base.IUserService;
 import com.example.userservice.utils.TimeUtils;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -73,18 +76,27 @@ public class UserServiceImpl implements IUserService {
     }
 
     @Override
-    public List<UserSearchResponse> searchUsers(String keyword) {
-        List<User> users = (keyword == null || keyword.isBlank())
-                ? userRepository.findAllActive()
-                : userRepository.searchByKeyword(keyword.trim());
-
-        return buildUserSearchResponses(users);
+    public PageResponse<UserSearchResponse> searchUsers(String keyword, Pageable pageable) {
+        Page<User> page = (keyword == null || keyword.isBlank())
+                ? userRepository.findAllActive(pageable)
+                : userRepository.searchByKeyword(keyword.trim(), pageable);
+        List<UserSearchResponse> response = buildUserSearchResponses(page.getContent());
+        return new PageResponse<>(
+                page.getNumber(),
+                page.getNumberOfElements(),
+                response
+        );
     }
 
     @Override
-    public List<UserSearchResponse> getAllUsers() {
-        List<User> users = userRepository.findAllActive();
-        return buildUserSearchResponses(users);
+    public PageResponse<UserSearchResponse> getAllUsers(Pageable pageable) {
+        Page<User> page = userRepository.findAllActive(pageable);
+        List<UserSearchResponse> response = buildUserSearchResponses(page.getContent());
+        return new PageResponse<>(
+                page.getNumber(),
+                page.getNumberOfElements(),
+                response
+        );
     }
 
     private List<UserSearchResponse> buildUserSearchResponses(List<User> users) {

@@ -4,6 +4,10 @@ import type { User, BorrowRecord } from '../../types';
 interface UserManagementProps {
   users: User[];
   allBorrows?: BorrowRecord[];
+  page?: number;
+  pageSize?: number;
+  sizeOfPage?: number;
+  onPageChange?: (newPage: number) => void;
   onOpenEditUser: (user: User) => void;
   onDeleteUser: (userId: number) => void;
   onSearchUsers: (keyword: string) => void;
@@ -12,6 +16,10 @@ interface UserManagementProps {
 export const UserManagement: React.FC<UserManagementProps> = ({
   users,
   allBorrows = [],
+  page = 0,
+  pageSize = 10,
+  sizeOfPage = 0,
+  onPageChange,
   onOpenEditUser,
   onDeleteUser,
   onSearchUsers,
@@ -181,6 +189,39 @@ export const UserManagement: React.FC<UserManagementProps> = ({
               )}
             </tbody>
           </table>
+        </div>
+
+        {/* Pagination Controls */}
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginTop: '20px',
+            paddingTop: '16px',
+            borderTop: '1px solid rgba(255, 255, 255, 0.1)',
+          }}
+        >
+          <span className="text-muted" style={{ fontSize: '0.9rem' }}>
+            Số lượng trong trang: <strong>{sizeOfPage || users.length}</strong> (Trang {page + 1})
+          </span>
+          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+            <button
+              className="btn btn-sm btn-secondary"
+              disabled={page <= 0}
+              onClick={() => onPageChange && onPageChange(page - 1)}
+            >
+              <i className="fa-solid fa-chevron-left"></i> Trang trước
+            </button>
+            <span style={{ fontWeight: 600, padding: '0 8px' }}>Trang {page + 1}</span>
+            <button
+              className="btn btn-sm btn-secondary"
+              disabled={users.length < pageSize}
+              onClick={() => onPageChange && onPageChange(page + 1)}
+            >
+              Trang sau <i className="fa-solid fa-chevron-right"></i>
+            </button>
+          </div>
         </div>
       </div>
 

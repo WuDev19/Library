@@ -48,6 +48,9 @@ const MainApp: React.FC = () => {
   const [borrowSizeOfPage, setBorrowSizeOfPage] = useState<number>(0);
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [users, setUsers] = useState<User[]>([]);
+  const [userPage, setUserPage] = useState<number>(0);
+  const [userPageSize] = useState<number>(10);
+  const [userSizeOfPage, setUserSizeOfPage] = useState<number>(0);
   const [loading, setLoading] = useState<boolean>(false);
 
   // --- Modal Open States ---
@@ -94,7 +97,7 @@ const MainApp: React.FC = () => {
         categoryApi.getAll(),
         user?.role === 'LIBRARIAN' ? borrowApi.getAll(borrowPage, borrowPageSize) : borrowApi.getMyHistory(borrowPage, borrowPageSize),
         notificationApi.getMyNotifications(),
-        user?.role === 'LIBRARIAN' ? userApi.getAllUsers() : Promise.resolve([]),
+        user?.role === 'LIBRARIAN' ? userApi.getAllUsers(userPage, userPageSize) : Promise.resolve({ page: 0, sizeOfPage: 0, content: [] }),
       ]);
 
       if (fetchedBooks.status === 'fulfilled' && fetchedBooks.value) {
@@ -142,15 +145,22 @@ const MainApp: React.FC = () => {
       });
 
       setNotifications(notifsList);
-      if (fetchedUsers.status === 'fulfilled' && Array.isArray(fetchedUsers.value)) {
-        setUsers(fetchedUsers.value);
+      if (fetchedUsers.status === 'fulfilled' && fetchedUsers.value) {
+        const pageData = fetchedUsers.value;
+        if ('content' in pageData && Array.isArray(pageData.content)) {
+          setUsers(pageData.content || []);
+          setUserPage(pageData.page ?? 0);
+          setUserSizeOfPage(pageData.sizeOfPage ?? (pageData.content?.length || 0));
+        } else if (Array.isArray(pageData)) {
+          setUsers(pageData as User[]);
+        }
       }
     } catch (err: unknown) {
       console.warn('Backend REST API call error:', err);
     } finally {
       setLoading(false);
     }
-  }, [token, user?.role, bookPage, pageSize, borrowPage, borrowPageSize]);
+  }, [token, user?.role, bookPage, pageSize, borrowPage, borrowPageSize, userPage, userPageSize]);
 
   const handleBorrowPageChange = async (newPage: number) => {
     if (newPage < 0) return;
@@ -179,6 +189,21 @@ const MainApp: React.FC = () => {
       setSizeOfPage(res.sizeOfPage);
     } catch (err) {
       console.warn('Error fetching paginated books:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleUserPageChange = async (newPage: number) => {
+    if (newPage < 0) return;
+    setLoading(true);
+    try {
+      const res = await userApi.getAllUsers(newPage, userPageSize);
+      setUsers(res.content || []);
+      setUserPage(res.page);
+      setUserSizeOfPage(res.sizeOfPage);
+    } catch (err) {
+      console.warn('Error fetching paginated users:', err);
     } finally {
       setLoading(false);
     }
@@ -288,9 +313,11 @@ const MainApp: React.FC = () => {
 
   const handleSearchUsers = async (keyword: string) => {
     try {
-      const res = await userApi.searchUsers(keyword);
-      setUsers(res);
-      showToast(`Tìm thấy ${res.length} người dùng phù hợp.`);
+      const res = await userApi.searchUsers(keyword, 0, userPageSize);
+      setUsers(res.content || []);
+      setUserPage(res.page);
+      setUserSizeOfPage(res.sizeOfPage);
+      showToast(`Tìm thấy ${(res.content || []).length} người dùng phù hợp.`);
     } catch (err: unknown) {
       showToast((err as Error).message || 'Tìm kiếm người dùng thất bại', 'error');
     }
@@ -500,6 +527,10 @@ const MainApp: React.FC = () => {
                 <UserManagement
                   users={users}
                   allBorrows={borrows}
+                  page={userPage}
+                  pageSize={userPageSize}
+                  sizeOfPage={userSizeOfPage}
+                  onPageChange={handleUserPageChange}
                   onOpenEditUser={(u) => {
                     setEditingUser(u);
                     setIsUserModalOpen(true);

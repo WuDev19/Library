@@ -212,6 +212,23 @@ export const authApi = {
     }),
 };
 
+const normalizeUserPageResponse = (raw: unknown): PageResponse<User> => {
+  if (Array.isArray(raw)) {
+    return {
+      page: 0,
+      sizeOfPage: raw.length,
+      content: raw.map(normalizeUser),
+    };
+  }
+  const obj = (raw || {}) as Record<string, unknown>;
+  const contentArray = Array.isArray(obj.content) ? obj.content : [];
+  return {
+    page: Number(obj.page || 0),
+    sizeOfPage: Number(obj.sizeOfPage ?? contentArray.length),
+    content: contentArray.map(normalizeUser),
+  };
+};
+
 // --- UserService Endpoints (/api/v1/user) ---
 export const userApi = {
   createUser: (data: { userId: number; email: string; fullName: string; phone: string }) =>
@@ -231,15 +248,17 @@ export const userApi = {
         phone: data.phone,
       }),
     }),
-  searchUsers: async (keyword?: string): Promise<User[]> => {
-    const raw = await apiRequest<Record<string, unknown>[]>(
-      `/user/search${keyword ? `?keyword=${encodeURIComponent(keyword)}` : ''}`
-    );
-    return Array.isArray(raw) ? raw.map(normalizeUser) : [];
+  searchUsers: async (keyword?: string, page = 0, size = 10): Promise<PageResponse<User>> => {
+    const params = new URLSearchParams();
+    if (keyword) params.append('keyword', keyword);
+    params.append('page', String(page));
+    params.append('size', String(size));
+    const raw = await apiRequest<unknown>(`/user/search?${params.toString()}`);
+    return normalizeUserPageResponse(raw);
   },
-  getAllUsers: async (): Promise<User[]> => {
-    const raw = await apiRequest<Record<string, unknown>[]>('/user');
-    return Array.isArray(raw) ? raw.map(normalizeUser) : [];
+  getAllUsers: async (page = 0, size = 10): Promise<PageResponse<User>> => {
+    const raw = await apiRequest<unknown>(`/user?page=${page}&size=${size}`);
+    return normalizeUserPageResponse(raw);
   },
   deleteUserInternal: (userId: number) =>
     apiRequest<void>(`/user/${userId}`, {

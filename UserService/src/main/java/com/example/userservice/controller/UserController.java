@@ -5,6 +5,7 @@ import com.example.userservice.constants.StringCommon;
 import com.example.userservice.dto.common.ApiResponse;
 import com.example.userservice.dto.common.ApiResult;
 import com.example.userservice.dto.common.CRUDResponseHelper;
+import com.example.userservice.dto.common.PageResponse;
 import com.example.userservice.dto.request.UserCreateRequest;
 import com.example.userservice.dto.request.UserUpdateRequest;
 import com.example.userservice.dto.response.UserCreateResponse;
@@ -15,13 +16,13 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.Map;
 
 @SecurityRequirement(name = StringCommon.SECURITY_SCHEME)
@@ -69,18 +70,21 @@ public class UserController {
     @Operation(summary = "Api cho librarian tìm kiếm user")
     @GetMapping("/search")
     @PreAuthorize("hasRole('LIBRARIAN')")
-    public ResponseEntity<ApiResult<List<UserSearchResponse>>> searchUsers(
-            @RequestParam(required = false) String keyword
+    public ResponseEntity<ApiResult<PageResponse<UserSearchResponse>>> searchUsers(
+            @RequestParam(required = false) String keyword,
+            @PageableDefault Pageable pageable
     ) {
-        List<UserSearchResponse> results = userService.searchUsers(keyword);
+        PageResponse<UserSearchResponse> results = userService.searchUsers(keyword, pageable);
         return ApiResponse.success(results, "Tìm kiếm user thành công", Constants.SUCCESS_CODE);
     }
 
     @Operation(summary = "Api cho librarian lấy tất cả user")
     @GetMapping
     @PreAuthorize("hasRole('LIBRARIAN')")
-    public ResponseEntity<ApiResult<List<UserSearchResponse>>> getAllUsers() {
-        List<UserSearchResponse> results = userService.getAllUsers();
+    public ResponseEntity<ApiResult<PageResponse<UserSearchResponse>>> getAllUsers(
+            @PageableDefault Pageable pageable
+    ) {
+        PageResponse<UserSearchResponse> results = userService.getAllUsers(pageable);
         return ApiResponse.success(results, "Lấy danh sách user thành công", Constants.SUCCESS_CODE);
     }
 
