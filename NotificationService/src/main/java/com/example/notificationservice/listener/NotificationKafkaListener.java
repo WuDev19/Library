@@ -3,8 +3,6 @@ package com.example.notificationservice.listener;
 import com.example.grpc.user.v1.GetUserRequest;
 import com.example.grpc.user.v1.UserResponse;
 import com.example.grpc.user.v1.UserServiceGrpc;
-import com.example.notificationservice.client.UserService;
-import com.example.notificationservice.dto.common.ApiResult;
 import com.example.notificationservice.dto.event.NotificationEventPayload;
 import com.example.notificationservice.entity.Notification;
 import com.example.notificationservice.repository.NotificationRepository;

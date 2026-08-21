@@ -12,7 +12,7 @@ import java.util.Date;
 import java.util.UUID;
 
 @Component
-@GlobalClientInterceptor
+//@GlobalClientInterceptor
 public class GrpcJwtInterceptor implements ClientInterceptor {
 
     @Value("${JWT_SECRET_KEY}")
